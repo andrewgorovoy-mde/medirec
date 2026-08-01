@@ -4,7 +4,8 @@ import type { JSX } from 'react';
 import { AgentAudioVisualizerAura } from './AgentAudioVisualizerAura';
 import type { VoiceVisualState } from './AgentAudioVisualizerAura';
 import { useDeepgramAura } from './useDeepgramAura';
-import { SIDEBAR_BG } from '../theme/tokens';
+
+const ORB_COLOR = '#C084FC';
 
 type TealVoiceOrbProps = {
   visualState: VoiceVisualState;
@@ -37,7 +38,7 @@ export function TealVoiceOrb({
     >
       <AgentAudioVisualizerAura
         size="xl"
-        color={SIDEBAR_BG}
+        color={ORB_COLOR}
         colorShift={0.05}
         state={visualState}
         themeMode="dark"
