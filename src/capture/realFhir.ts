@@ -1,6 +1,6 @@
 import type { MedplumClient } from '@medplum/core';
 import type { CodeableConcept, Encounter, MedicationRequest, MedicationStatement } from '@medplum/fhirtypes';
-import { computeVerdict } from './verdict';
+import { computeVerdict, notInHomeQuestions } from './verdict';
 import type {
   CaptureInput,
   CheckMedResponse,
@@ -116,6 +116,30 @@ export async function checkMed(
   return { ...verdict, statementId: `MedicationStatement/${statement.id}` };
 }
 
+/**
+ * Verdict details (evidence, ehrSays/homeSays, suggestedAction, followUpQuestions, etc.) don't
+ * have a natural FHIR home, so checkMed round-trips them as JSON in MedicationStatement.note[0].text.
+ * This parses that back out — shared by getSummary and by the patient Medications tab, which
+ * shows a patient's full reconciliation history across all sessions, not just one.
+ */
+export function parseMedicationStatementVerdict(
+  statement: MedicationStatement
+): { row: CheckMedResponse; lastUpdated: string | undefined } | null {
+  const noteText = statement.note?.[0]?.text;
+  if (!noteText) {
+    return null;
+  }
+  try {
+    const verdict = JSON.parse(noteText) as Omit<CheckMedResponse, 'statementId'>;
+    return {
+      row: { ...verdict, statementId: `MedicationStatement/${statement.id}` },
+      lastUpdated: statement.meta?.lastUpdated,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getSummary(medplum: MedplumClient, sessionId: string): Promise<SessionSummaryResponse> {
   const encounter = await medplum.readReference<Encounter>({ reference: sessionId });
   const patientRef = encounter.subject!.reference!;
@@ -127,18 +151,7 @@ export async function getSummary(medplum: MedplumClient, sessionId: string): Pro
   ]);
 
   const rows: CheckMedResponse[] = statements
-    .map((s) => {
-      const noteText = s.note?.[0]?.text;
-      if (!noteText) {
-        return null;
-      }
-      try {
-        const verdict = JSON.parse(noteText) as Omit<CheckMedResponse, 'statementId'>;
-        return { row: { ...verdict, statementId: `MedicationStatement/${s.id}` }, lastUpdated: s.meta?.lastUpdated };
-      } catch {
-        return null;
-      }
-    })
+    .map(parseMedicationStatementVerdict)
     .filter((r): r is { row: CheckMedResponse; lastUpdated: string | undefined } => r !== null)
     .sort((a, b) => (b.lastUpdated ?? '').localeCompare(a.lastUpdated ?? ''))
     .map((r) => r.row);
@@ -151,6 +164,7 @@ export async function getSummary(medplum: MedplumClient, sessionId: string): Pro
       display: m.display,
       evidence: ["Active in the record, but no bottle was found and she didn't mention it"],
       severity: 'review' as const,
+      followUpQuestions: notInHomeQuestions(m.display),
     }));
 
   return {

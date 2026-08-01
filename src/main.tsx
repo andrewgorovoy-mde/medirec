@@ -16,6 +16,25 @@ const medplum = new MedplumClient({
 });
 
 const theme = createTheme({
+  fontFamily:
+    '-apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+  primaryColor: 'brand',
+  primaryShade: 8,
+  defaultRadius: 'sm',
+  colors: {
+    brand: [
+      '#F7F3FA',
+      '#EDE1F3',
+      '#DCC4E8',
+      '#C7A0D9',
+      '#B27DC9',
+      '#9C5CB8',
+      '#8446A0',
+      '#6B3684',
+      '#43205F',
+      '#2B123E',
+    ],
+  },
   headings: {
     sizes: {
       h1: {
@@ -31,6 +50,24 @@ const theme = createTheme({
     md: '0.875rem',
     lg: '1.0rem',
     xl: '1.125rem',
+  },
+  components: {
+    Button: {
+      defaultProps: { radius: 'sm' },
+      styles: { root: { fontWeight: 600 } },
+    },
+    Card: {
+      defaultProps: { radius: 'md' },
+    },
+    TextInput: {
+      defaultProps: { radius: 'md' },
+    },
+    Select: {
+      defaultProps: { radius: 'md' },
+    },
+    NumberInput: {
+      defaultProps: { radius: 'md' },
+    },
   },
 });
 

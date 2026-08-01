@@ -15,40 +15,46 @@ if (!existsSync(path.join(__dirname, '.env'))) {
 
 dns.setDefaultResultOrder('verbatim');
 
-// Dev-only stand-in for the Vercel serverless function at api/extract.ts, so
-// `npm run dev` can hit /api/extract without needing `vercel dev`.
-function apiExtractDevPlugin(): Plugin {
-  return {
-    name: 'api-extract-dev-middleware',
-    configureServer(server) {
-      server.middlewares.use('/api/extract', (req, res) => {
-        if (req.method !== 'POST') {
-          res.statusCode = 405;
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
-          return;
-        }
+interface DevApiResponse {
+  status(code: number): DevApiResponse;
+  json(payload: unknown): void;
+}
+type ApiHandler = (req: { method?: string; body?: unknown }, res: DevApiResponse) => Promise<void>;
 
+// Dev-only stand-in for Vercel serverless functions under api/, so `npm run dev` can hit them
+// without needing `vercel dev`. Each function's default-exported handler(req, res) is reused
+// as-is; this just adapts Vite's Connect middleware request/response into that shape.
+// `loadHandler` must be a literal `() => import('./literal/path')` at the call site — Vite only
+// statically resolves dynamic imports it can see as a literal string; a variable path breaks
+// once vite.config.ts is transpiled into a temp copy elsewhere on disk.
+function apiDevPlugin(route: string, loadHandler: () => Promise<{ default: ApiHandler }>): Plugin {
+  return {
+    name: `api-dev-middleware${route.replace(/\W+/g, '-')}`,
+    configureServer(server) {
+      server.middlewares.use(route, (req, res) => {
         const chunks: Buffer[] = [];
         req.on('data', (chunk) => chunks.push(chunk));
         req.on('end', () => {
           void (async () => {
             try {
-              const { extractMed } = await import('./api/extract');
-              const body = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
-              const image = body?.image;
-              if (!image || typeof image !== 'string') {
-                res.statusCode = 400;
-                res.end(JSON.stringify({ error: 'Missing "image" (base64 JPEG) in request body' }));
-                return;
-              }
-
-              const result = await extractMed(image);
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(result));
+              const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf-8')) : undefined;
+              const { default: handler } = await loadHandler();
+              const devReq = { method: req.method, body };
+              const devRes = {
+                status(code: number) {
+                  res.statusCode = code;
+                  return devRes;
+                },
+                json(payload: unknown) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify(payload));
+                },
+              };
+              await handler(devReq, devRes);
             } catch (err) {
-              console.error('extract dev middleware failed', err);
+              console.error(`${route} dev middleware failed`, err);
               res.statusCode = 500;
-              res.end(JSON.stringify({ error: 'Extraction failed' }));
+              res.end(JSON.stringify({ error: 'Request failed' }));
             }
           })();
         });
@@ -59,12 +65,12 @@ function apiExtractDevPlugin(): Plugin {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // GEMINI_API_KEY / MOSS_PROJECT_ID / MOSS_PROJECT_KEY are server-only secrets — deliberately
-  // NOT under the MEDPLUM_ envPrefix below, so Vite never exposes them to client bundle code.
-  // loadEnv with an empty prefix filter is only used here, in Node config scope, to feed them
-  // into process.env for the dev middleware above.
+  // GEMINI_API_KEY / MOSS_PROJECT_ID / MOSS_PROJECT_KEY / STEDI_API_KEY / STEDI_PROVIDER_NPI are
+  // server-only secrets — deliberately NOT under the MEDPLUM_ envPrefix below, so Vite never
+  // exposes them to client bundle code. loadEnv with an empty prefix filter is only used here,
+  // in Node config scope, to feed them into process.env for the dev middleware above.
   const env = loadEnv(mode, process.cwd(), '');
-  for (const key of ['GEMINI_API_KEY', 'MOSS_PROJECT_ID', 'MOSS_PROJECT_KEY']) {
+  for (const key of ['GEMINI_API_KEY', 'MOSS_PROJECT_ID', 'MOSS_PROJECT_KEY', 'STEDI_API_KEY', 'STEDI_PROVIDER_NPI']) {
     if (env[key]) {
       process.env[key] = env[key];
     }
@@ -72,7 +78,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     envPrefix: ['MEDPLUM_'],
-    plugins: [react(), apiExtractDevPlugin()],
+    plugins: [
+      react(),
+      apiDevPlugin('/api/extract', () => import('./api/extract')),
+      apiDevPlugin('/api/eligibility', () => import('./api/eligibility')),
+    ],
     server: {
       host: 'localhost',
       port: 3000,

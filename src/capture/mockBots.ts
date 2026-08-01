@@ -8,7 +8,7 @@ import type {
   SessionSummaryResponse,
   Severity,
 } from './types';
-import { computeVerdict } from './verdict';
+import { computeVerdict, notInHomeQuestions } from './verdict';
 
 const MOCK_PATIENT = { id: 'Patient/maria-alvarez', name: 'Maria Alvarez', age: 78 };
 
@@ -105,6 +105,7 @@ export function mockGetSummary(sessionId: string): SessionSummaryResponse {
     display: m.display,
     evidence: ["Active in the record, but no bottle was found and she didn't mention it"],
     severity: 'review' as Severity,
+    followUpQuestions: notInHomeQuestions(m.display),
   }));
 
   return {

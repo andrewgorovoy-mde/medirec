@@ -1,3 +1,6 @@
+// Shared contract between the mock (mockBots.ts) and real FHIR (realFhir.ts) reconciliation
+// backends — computeVerdict operates only on these plain types, so either backend can drive it.
+
 export interface EhrMed {
   matchKey: string;
   display: string;
@@ -48,6 +51,8 @@ export interface CheckMedResponse {
   evidence: string[];
   confidence: number;
   suggestedAction?: string;
+  /** Follow-up questions worth asking the patient/prescriber — empty for MATCH. */
+  followUpQuestions: string[];
   statementId: string;
 }
 
@@ -56,6 +61,7 @@ export interface NotInHomeEntry {
   display: string;
   evidence: string[];
   severity: Severity;
+  followUpQuestions: string[];
 }
 
 export interface SessionSummaryResponse {

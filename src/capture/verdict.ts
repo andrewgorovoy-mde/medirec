@@ -31,6 +31,15 @@ export function productMarkers(display: string): string[] {
 
 export type VerdictResult = Omit<CheckMedResponse, 'statementId'>;
 
+/** Follow-up questions for a medication that's active in the EHR but was never found at home. */
+export function notInHomeQuestions(display: string): string[] {
+  return [
+    `Did she ever fill the prescription for ${display}?`,
+    'Could the bottle be somewhere else — another pharmacy, a family member, a bag not yet checked?',
+    'Should the prescriber be told this may not actually be taken?',
+  ];
+}
+
 /**
  * Precedence: DUPLICATE -> DOSE_CONFLICT -> NOT_IN_EHR -> MATCH (UNRESOLVED short-circuits first).
  * Pure function over plain objects — doesn't care whether ehrMeds came from a mock array or a
@@ -47,6 +56,11 @@ export function computeVerdict(med: MedInput, ehrMeds: EhrMed[], confidence: num
       evidence: [`Could not identify: "${med.rawText}"`],
       confidence,
       suggestedAction: 'Identify the medication and re-capture',
+      followUpQuestions: [
+        'Can you get a clearer photo of the label, or read it aloud?',
+        'Does the patient know what this medication is for?',
+        'Is there a pharmacy label, box, or prescription slip nearby with more detail?',
+      ],
     };
   }
 
@@ -63,6 +77,11 @@ export function computeVerdict(med: MedInput, ehrMeds: EhrMed[], confidence: num
       evidence: ['Found in the house, but not in the active EHR medication list'],
       confidence,
       suggestedAction: 'Confirm this medication with the prescriber and add to the record if appropriate',
+      followUpQuestions: [
+        'Who prescribed this, and when did she start taking it?',
+        'Is it over-the-counter or a prescription medication?',
+        'Should this be added to her active medication list?',
+      ],
     };
   }
 
@@ -92,6 +111,11 @@ export function computeVerdict(med: MedInput, ehrMeds: EhrMed[], confidence: num
       ],
       confidence,
       suggestedAction: 'Confirm with the prescriber whether the older product should stop',
+      followUpQuestions: [
+        `Is she taking both the ${ehrSays.split(',')[0]} and the ${homeSays.split(',')[0]}, or just one?`,
+        'Did the hospital tell her to stop the older bottle when the new one was started?',
+        'Should the old bottle be discarded to avoid double-dosing?',
+      ],
     };
   }
 
@@ -107,6 +131,11 @@ export function computeVerdict(med: MedInput, ehrMeds: EhrMed[], confidence: num
       evidence: [`EHR says ${ehrSays}`, `Home bottle says ${homeSays}`, 'Same product, different dose'],
       confidence,
       suggestedAction: 'Confirm the correct dose with the prescriber',
+      followUpQuestions: [
+        'Which dose is she actually taking right now — the bottle label or the chart?',
+        'When did the dose change, and who authorized it?',
+        'Has she had any symptoms that suggest the dose might be wrong (dizziness, fatigue, palpitations)?',
+      ],
     };
   }
 
@@ -120,5 +149,6 @@ export function computeVerdict(med: MedInput, ehrMeds: EhrMed[], confidence: num
     homeSays,
     evidence: ['Matches the active EHR medication'],
     confidence,
+    followUpQuestions: [],
   };
 }

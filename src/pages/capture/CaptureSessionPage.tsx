@@ -1,87 +1,93 @@
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Group,
-  List,
-  Loader,
-  NumberInput,
-  Stack,
-  Text,
-  TextInput,
-  Title,
-} from '@mantine/core';
-import { Document, useMedplum } from '@medplum/react';
+import { ActionIcon, Alert, Button, Card, Group, Loader, NumberInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { useMedplum } from '@medplum/react';
+import { IconArrowLeft, IconCamera, IconCheck, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JSX } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { captureVideoFrameToBase64Jpeg } from '../../capture/image';
 import { checkMed, getSummary, startSession } from '../../capture/medplumApi';
-import type {
-  CheckMedResponse,
-  MedInput,
-  SessionStartResponse,
-  SessionSummaryResponse,
-  Severity,
-} from '../../capture/types';
+import type { CheckMedResponse, MedInput, SessionStartResponse, SessionSummaryResponse } from '../../capture/types';
+import { NotInHomeCard, VerdictCard } from '../../components/VerdictCard';
 
-const SEVERITY_COLOR: Record<Severity, string> = {
-  auto: 'gray',
-  review: 'yellow',
-  must_resolve: 'red',
-};
+const TOP_BAR_HEIGHT = 56;
+const BOTTOM_BAR_HEIGHT = 84;
+
+interface QueueItem {
+  id: string;
+  thumbnail: string; // base64 JPEG, no data: prefix
+  status: 'queued' | 'processing' | 'done' | 'error';
+  verdict?: CheckMedResponse;
+  errorMessage?: string;
+}
 
 function sessionStorageKey(patientId: string): string {
   return `capture-session:${patientId}`;
 }
 
-function VerdictCard({ result }: { result: CheckMedResponse }): JSX.Element {
+function newId(): string {
+  return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+}
+
+function QueueThumb({ item }: { item: QueueItem }): JSX.Element {
+  const border =
+    item.status === 'done'
+      ? '#2F7A4C'
+      : item.status === 'error'
+        ? '#B03052'
+        : item.status === 'processing'
+          ? '#43205F'
+          : '#CCDCE9';
   return (
-    <Card withBorder padding="sm">
-      <Group justify="space-between" mb="xs">
-        <Text fw={600}>{result.display}</Text>
-        <Badge color={SEVERITY_COLOR[result.severity]}>{result.verdict}</Badge>
-      </Group>
-      {result.ehrSays && (
-        <Text size="sm">
-          <b>EHR says:</b> {result.ehrSays}
-        </Text>
+    <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+      <img
+        src={`data:image/jpeg;base64,${item.thumbnail}`}
+        alt=""
+        style={{
+          width: 56,
+          height: 56,
+          objectFit: 'cover',
+          borderRadius: 8,
+          border: `2px solid ${border}`,
+        }}
+      />
+      {item.status === 'processing' && (
+        <Loader size={16} style={{ position: 'absolute', inset: 0, margin: 'auto' }} />
       )}
-      {result.homeSays && (
-        <Text size="sm">
-          <b>Home says:</b> {result.homeSays}
-        </Text>
+      {item.status === 'done' && (
+        <IconCheck
+          size={16}
+          color="white"
+          style={{ position: 'absolute', bottom: -4, right: -4, background: '#2F7A4C', borderRadius: '50%', padding: 2 }}
+        />
       )}
-      {result.evidence.length > 0 && (
-        <List size="sm" mt="xs">
-          {result.evidence.map((line) => (
-            <List.Item key={line}>{line}</List.Item>
-          ))}
-        </List>
+      {item.status === 'error' && (
+        <IconX
+          size={16}
+          color="white"
+          style={{ position: 'absolute', bottom: -4, right: -4, background: '#B03052', borderRadius: '50%', padding: 2 }}
+        />
       )}
-      {result.suggestedAction && (
-        <Text size="sm" mt="xs" fs="italic">
-          {result.suggestedAction}
-        </Text>
-      )}
-    </Card>
+    </div>
   );
 }
 
 export function CaptureSessionPage(): JSX.Element {
   const { id: patientId } = useParams();
   const medplum = useMedplum();
+  const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream>(null);
+  const processingRef = useRef(false);
 
   const [session, setSession] = useState<SessionStartResponse>();
   const [results, setResults] = useState<CheckMedResponse[]>([]);
   const [summary, setSummary] = useState<SessionSummaryResponse>();
-  const [busy, setBusy] = useState<'starting' | 'extracting' | 'summarizing'>();
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [busy, setBusy] = useState<'starting' | 'summarizing'>();
   const [error, setError] = useState<string>();
   const [cameraOpen, setCameraOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [manualBusy, setManualBusy] = useState(false);
   const [manual, setManual] = useState({ matchKey: '', display: '', strengthMg: '', dosesPerDay: '', rawText: '' });
 
   const stopCamera = useCallback(() => {
@@ -90,7 +96,7 @@ export function CaptureSessionPage(): JSX.Element {
     setCameraOpen(false);
   }, []);
 
-  // Release the camera if the nurse navigates away mid-capture, not just on Cancel.
+  // Release the camera if the nurse navigates away mid-capture, not just via Done.
   useEffect(() => stopCamera, [stopCamera]);
 
   useEffect(() => {
@@ -99,7 +105,7 @@ export function CaptureSessionPage(): JSX.Element {
     }
   }, [cameraOpen]);
 
-  async function startCamera() {
+  async function startCamera(): Promise<void> {
     setError(undefined);
     try {
       streamRef.current = await navigator.mediaDevices.getUserMedia({
@@ -139,6 +145,52 @@ export function CaptureSessionPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
+  // Sequential background worker: picks up the next queued photo and processes it
+  // (extract -> checkMed) without blocking the live camera view, so the nurse can keep
+  // snapping bottles while earlier ones are still being read.
+  useEffect(() => {
+    if (processingRef.current || !session) {
+      return;
+    }
+    const next = queue.find((item) => item.status === 'queued');
+    if (!next) {
+      return;
+    }
+    processingRef.current = true;
+    setQueue((q) => q.map((it) => (it.id === next.id ? { ...it, status: 'processing' } : it)));
+
+    void (async () => {
+      try {
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: next.thumbnail }),
+        });
+        if (!res.ok) {
+          throw new Error(`Extraction failed (${res.status})`);
+        }
+        const { med, confidence } = (await res.json()) as { med: MedInput; confidence: number };
+        const verdict = await checkMed(medplum, session.sessionId, med, { source: 'label_photo', confidence });
+        setQueue((q) => q.map((it) => (it.id === next.id ? { ...it, status: 'done', verdict } : it)));
+        setResults((prev) => [verdict, ...prev]);
+      } catch (err) {
+        setQueue((q) =>
+          q.map((it) => (it.id === next.id ? { ...it, status: 'error', errorMessage: String(err) } : it))
+        );
+      } finally {
+        processingRef.current = false;
+      }
+    })();
+  }, [queue, session, medplum]);
+
+  function handleCapture(): void {
+    if (!videoRef.current) {
+      return;
+    }
+    const thumbnail = captureVideoFrameToBase64Jpeg(videoRef.current);
+    setQueue((q) => [...q, { id: newId(), thumbnail, status: 'queued' }]);
+  }
+
   async function submitMed(med: MedInput, source: 'label_photo' | 'voice' | 'pill_image', confidence: number) {
     if (!session) {
       return;
@@ -151,35 +203,8 @@ export function CaptureSessionPage(): JSX.Element {
     }
   }
 
-  async function handleCapture() {
-    if (!videoRef.current) {
-      return;
-    }
-    const image = captureVideoFrameToBase64Jpeg(videoRef.current);
-    stopCamera();
-
-    setBusy('extracting');
-    setError(undefined);
-    try {
-      const res = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image }),
-      });
-      if (!res.ok) {
-        throw new Error(`Extraction failed (${res.status})`);
-      }
-      const { med, confidence } = (await res.json()) as { med: MedInput; confidence: number };
-      await submitMed(med, 'label_photo', confidence);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setBusy(undefined);
-    }
-  }
-
   async function handleManualSubmit() {
-    setBusy('extracting');
+    setManualBusy(true);
     setError(undefined);
     try {
       const med: MedInput = {
@@ -194,7 +219,7 @@ export function CaptureSessionPage(): JSX.Element {
     } catch (err) {
       setError(String(err));
     } finally {
-      setBusy(undefined);
+      setManualBusy(false);
     }
   }
 
@@ -215,169 +240,206 @@ export function CaptureSessionPage(): JSX.Element {
 
   if (!session) {
     return (
-      <Document>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         <Loader />
-      </Document>
+      </div>
     );
   }
 
+  const pendingCount = queue.filter((q) => q.status === 'queued' || q.status === 'processing').length;
+
   return (
-    <Document>
-      <Title order={3} mb="md">
-        Medication Reconciliation — {session.patient.name}
-      </Title>
-
-      {error && (
-        <Alert color="red" mb="md" onClose={() => setError(undefined)} withCloseButton>
-          {error}
-        </Alert>
-      )}
-
-      <Title order={5} mb="xs">
-        What the EHR already believes
-      </Title>
-      <Stack gap="xs" mb="lg">
-        {session.ehrMeds.map((med) => (
-          <Card withBorder padding="sm" key={med.matchKey}>
-            <Text fw={600}>{med.display}</Text>
-            <Text size="sm" c="dimmed">
-              {med.strengthMg != null ? `${med.strengthMg} MG` : 'strength unknown'} ·{' '}
-              {med.dosesPerDay != null ? `${med.dosesPerDay}x/day` : 'frequency unknown'}
-              {med.prescriber ? ` · ${med.prescriber}` : ''}
-            </Text>
-          </Card>
-        ))}
-      </Stack>
-
-      <Title order={5} mb="xs">
-        Capture a bottle
-      </Title>
-
-      {cameraOpen && (
-        <Stack gap="xs" mb="md">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ width: '100%', maxWidth: 480, borderRadius: 8, background: '#000' }}
-          />
-          <Group>
-            <Button loading={busy === 'extracting'} onClick={() => void handleCapture()}>
-              Capture
-            </Button>
-            <Button variant="subtle" onClick={stopCamera}>
-              Cancel
-            </Button>
-          </Group>
-        </Stack>
-      )}
-
-      <Group mb="md">
-        <Button loading={busy === 'extracting'} onClick={() => void startCamera()}>
-          Take Photo
+    <div style={{ position: 'fixed', inset: 0, background: '#F6F8FB', display: 'flex', flexDirection: 'column' }}>
+      <div
+        style={{
+          height: TOP_BAR_HEIGHT,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 12px',
+          background: 'white',
+          borderBottom: '1px solid #DCE4EC',
+          zIndex: 2,
+        }}
+      >
+        <ActionIcon variant="subtle" color="gray" onClick={() => navigate(`/Patient/${patientId}`)} aria-label="Back">
+          <IconArrowLeft size={20} />
+        </ActionIcon>
+        <Text fw={600} size="sm" style={{ flex: 1 }} truncate>
+          Reconciliation — {session.patient.name}
+        </Text>
+        <Button size="xs" variant="light" loading={busy === 'summarizing'} onClick={() => void handleFinish()}>
+          Finish
         </Button>
-        <Button variant="subtle" onClick={() => setManualOpen((v) => !v)}>
-          {manualOpen ? 'Hide manual entry' : 'Enter manually (testing)'}
-        </Button>
-        <Button variant="light" loading={busy === 'summarizing'} onClick={() => void handleFinish()}>
-          Finish session
-        </Button>
-      </Group>
+      </div>
 
-      {manualOpen && (
-        <Card withBorder padding="sm" mb="lg">
-          <Stack gap="xs">
-            <TextInput
-              label="matchKey (RxNorm ingredient code)"
-              placeholder="e.g. 6918"
-              value={manual.matchKey}
-              onChange={(e) => {
-                const value = e.currentTarget.value;
-                setManual((m) => ({ ...m, matchKey: value }));
-              }}
-            />
-            <TextInput
-              label="Display"
-              value={manual.display}
-              onChange={(e) => {
-                const value = e.currentTarget.value;
-                setManual((m) => ({ ...m, display: value }));
-              }}
-            />
-            <Group grow>
-              <NumberInput
-                label="Strength (mg)"
-                value={manual.strengthMg}
-                onChange={(v) => setManual((m) => ({ ...m, strengthMg: String(v) }))}
-              />
-              <NumberInput
-                label="Doses per day"
-                value={manual.dosesPerDay}
-                onChange={(v) => setManual((m) => ({ ...m, dosesPerDay: String(v) }))}
-              />
-            </Group>
-            <TextInput
-              label="Raw text"
-              value={manual.rawText}
-              onChange={(e) => {
-                const value = e.currentTarget.value;
-                setManual((m) => ({ ...m, rawText: value }));
-              }}
-            />
-            <Button loading={busy === 'extracting'} onClick={() => void handleManualSubmit()}>
-              Submit
-            </Button>
-          </Stack>
-        </Card>
-      )}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+        {error && (
+          <Alert color="red" mb="md" onClose={() => setError(undefined)} withCloseButton>
+            {error}
+          </Alert>
+        )}
 
-      {results.length > 0 && (
-        <>
-          <Title order={5} mb="xs">
-            Captured so far
-          </Title>
-          <Stack gap="xs" mb="lg">
-            {results.map((r) => (
-              <VerdictCard key={r.statementId} result={r} />
-            ))}
-          </Stack>
-        </>
-      )}
-
-      {summary && (
-        <>
-          <Title order={5} mb="xs">
-            Session summary
-          </Title>
-          <Text mb="xs">
-            {summary.summary.matched} matched · {summary.summary.needsReview} need review ·{' '}
-            {summary.summary.mustResolve} must resolve · {summary.summary.captured} captured total
-          </Text>
-          {summary.notInHome.length > 0 && (
-            <>
-              <Text fw={600} mb="xs">
-                Never found
-              </Text>
-              <Stack gap="xs">
-                {summary.notInHome.map((entry) => (
-                  <Card withBorder padding="sm" key={entry.matchKey}>
-                    <Group justify="space-between">
-                      <Text fw={600}>{entry.display}</Text>
-                      <Badge color={SEVERITY_COLOR[entry.severity]}>NOT_IN_HOME</Badge>
-                    </Group>
-                    <List size="sm" mt="xs">
-                      {entry.evidence.map((line) => (
-                        <List.Item key={line}>{line}</List.Item>
-                      ))}
-                    </List>
-                  </Card>
+        {cameraOpen && (
+          <Stack gap="xs" mb="md">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: '100%', borderRadius: 8, background: '#000', maxHeight: '50vh', objectFit: 'cover' }}
+            />
+            {queue.length > 0 && (
+              <Group gap={6} wrap="nowrap" style={{ overflowX: 'auto' }}>
+                {queue.map((item) => (
+                  <QueueThumb key={item.id} item={item} />
                 ))}
-              </Stack>
-            </>
-          )}
-        </>
-      )}
-    </Document>
+              </Group>
+            )}
+          </Stack>
+        )}
+
+        <Title order={5} mb="xs">
+          What the EHR already believes
+        </Title>
+        <Stack gap="xs" mb="lg">
+          {session.ehrMeds.map((med) => (
+            <Card withBorder padding="sm" key={med.matchKey}>
+              <Text fw={600}>{med.display}</Text>
+              <Text size="sm" c="dimmed">
+                {med.strengthMg != null ? `${med.strengthMg} MG` : 'strength unknown'} ·{' '}
+                {med.dosesPerDay != null ? `${med.dosesPerDay}x/day` : 'frequency unknown'}
+                {med.prescriber ? ` · ${med.prescriber}` : ''}
+              </Text>
+            </Card>
+          ))}
+        </Stack>
+
+        {manualOpen && (
+          <Card withBorder padding="sm" mb="lg">
+            <Stack gap="xs">
+              <TextInput
+                label="matchKey (RxNorm ingredient code)"
+                placeholder="e.g. 6918"
+                value={manual.matchKey}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  setManual((m) => ({ ...m, matchKey: value }));
+                }}
+              />
+              <TextInput
+                label="Display"
+                value={manual.display}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  setManual((m) => ({ ...m, display: value }));
+                }}
+              />
+              <Group grow>
+                <NumberInput
+                  label="Strength (mg)"
+                  value={manual.strengthMg}
+                  onChange={(v) => setManual((m) => ({ ...m, strengthMg: String(v) }))}
+                />
+                <NumberInput
+                  label="Doses per day"
+                  value={manual.dosesPerDay}
+                  onChange={(v) => setManual((m) => ({ ...m, dosesPerDay: String(v) }))}
+                />
+              </Group>
+              <TextInput
+                label="Raw text"
+                value={manual.rawText}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  setManual((m) => ({ ...m, rawText: value }));
+                }}
+              />
+              <Button loading={manualBusy} onClick={() => void handleManualSubmit()}>
+                Submit
+              </Button>
+            </Stack>
+          </Card>
+        )}
+
+        {results.length > 0 && (
+          <>
+            <Title order={5} mb="xs">
+              Captured so far
+            </Title>
+            <Stack gap="xs" mb="lg">
+              {results.map((r) => (
+                <VerdictCard key={r.statementId} result={r} />
+              ))}
+            </Stack>
+          </>
+        )}
+
+        {summary && (
+          <>
+            <Title order={5} mb="xs">
+              Session summary
+            </Title>
+            <Text mb="xs">
+              {summary.summary.matched} matched · {summary.summary.needsReview} need review ·{' '}
+              {summary.summary.mustResolve} must resolve · {summary.summary.captured} captured total
+            </Text>
+            {summary.notInHome.length > 0 && (
+              <>
+                <Text fw={600} mb="xs">
+                  Never found
+                </Text>
+                <Stack gap="xs">
+                  {summary.notInHome.map((entry) => (
+                    <NotInHomeCard key={entry.matchKey} entry={entry} />
+                  ))}
+                </Stack>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      <div
+        style={{
+          height: BOTTOM_BAR_HEIGHT,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          background: 'white',
+          borderTop: '1px solid #DCE4EC',
+          zIndex: 2,
+        }}
+      >
+        {cameraOpen ? (
+          <>
+            <ActionIcon
+              size={64}
+              radius="xl"
+              onClick={handleCapture}
+              style={{ backgroundColor: '#43205F' }}
+              aria-label="Capture"
+            >
+              <IconCamera size={28} />
+            </ActionIcon>
+            <Button variant="subtle" onClick={stopCamera}>
+              Done{pendingCount > 0 ? ` (${pendingCount} processing)` : ''}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button leftSection={<IconCamera size={16} />} onClick={() => void startCamera()}>
+              Take Photo
+            </Button>
+            <Button variant="subtle" onClick={() => setManualOpen((v) => !v)}>
+              {manualOpen ? 'Hide manual entry' : 'Enter manually'}
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
