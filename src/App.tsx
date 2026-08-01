@@ -27,8 +27,10 @@ import { LandingPage } from './pages/LandingPage';
 import { PatientPage } from './pages/PatientPage';
 import { ResourcePage } from './pages/ResourcePage';
 import { SignInPage } from './pages/SignInPage';
+import { PatientSurveyPage } from './pages/survey/PatientSurveyPage';
 
 const FULL_SCREEN_ROUTE = /^\/Patient\/[^/]+\/capture\/?$/;
+const PATIENT_PORTAL_ROUTE = /^\/survey\/[^/]+\/?$/;
 
 export function App(): JSX.Element | null {
   const medplum = useMedplum();
@@ -56,6 +58,7 @@ export function App(): JSX.Element | null {
           <Route path="/Patient/:id/capture" element={<CaptureSessionPage />} />
           <Route path="/Patient/:id/MedicationRequest/new" element={<AddMedicationPage />} />
           <Route path="/Patient/:id/MedicationRequest/import" element={<ImportMedicationsPage />} />
+          <Route path="/survey/:id" element={<PatientSurveyPage />} />
           <Route
             path="/dashboard"
             element={
@@ -123,7 +126,7 @@ export function App(): JSX.Element | null {
     </ErrorBoundary>
   );
 
-  if (!profile || FULL_SCREEN_ROUTE.test(location.pathname)) {
+  if (!profile || FULL_SCREEN_ROUTE.test(location.pathname) || PATIENT_PORTAL_ROUTE.test(location.pathname)) {
     return routes;
   }
 

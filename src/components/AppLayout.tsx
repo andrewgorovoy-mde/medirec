@@ -99,7 +99,7 @@ export function AppLayout({ children }: { children: ReactNode }): JSX.Element {
         <Group gap={10} mb="xl">
           <img src="/logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <Text fw={700} size="xl" c={SIDEBAR_TEXT_ACTIVE}>
-            MediRec
+            TraceBack
           </Text>
         </Group>
         <Box style={{ flex: 1 }}>

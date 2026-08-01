@@ -21,6 +21,14 @@ import { BADGE_TONES, BORDER, TEXT_MUTED } from '../../theme/tokens';
 
 const RXNORM_SYSTEM = 'http://www.nlm.nih.gov/research/umls/rxnorm';
 
+// The whole file is base64-encoded (+~33%) and sent as one JSON request body to
+// /api/extract-medlist. Measured against the deployed Vercel function, that request gets
+// rejected with a 413 (FUNCTION_PAYLOAD_TOO_LARGE) once the base64 payload passes ~4-4.5MB —
+// so the raw file needs to stay comfortably under that after encoding. Multi-page scanned
+// discharge summaries routinely exceed this, which is what "upload PDF isn't working" turned
+// out to be: a cryptic 413 with no explanation. Guard here so the failure is actionable instead.
+const MAX_PDF_BYTES = 3 * 1024 * 1024;
+
 interface ParsedMed {
   id: string;
   selected: boolean;
@@ -64,6 +72,15 @@ export function ImportMedicationsPage(): JSX.Element {
     setMeds(undefined);
     setError(undefined);
     if (!selected) {
+      return;
+    }
+    if (selected.size > MAX_PDF_BYTES) {
+      setError(
+        `This PDF is ${(selected.size / (1024 * 1024)).toFixed(1)} MB, which is too large to upload. ` +
+          'Please use a file under 3 MB — try scanning at a lower resolution/black & white, or splitting ' +
+          'a multi-page document into smaller files.'
+      );
+      setFile(null);
       return;
     }
 

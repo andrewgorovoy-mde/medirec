@@ -133,7 +133,7 @@ export async function runEligibilityDiscovery(req: EligibilityRequest): Promise<
   let cob: EligibilityResult['cob'];
   if (items.length >= 2 && items[0].payerId) {
     const cobBody = {
-      provider: { npi: process.env.STEDI_PROVIDER_NPI ?? DEFAULT_NPI, organizationName: 'MediRec' },
+      provider: { npi: process.env.STEDI_PROVIDER_NPI ?? DEFAULT_NPI, organizationName: 'TraceBack' },
       subscriber: {
         firstName: req.firstName,
         lastName: req.lastName,

@@ -1,4 +1,4 @@
-<h1 align="center">MediRec</h1>
+<h1 align="center">TraceBack</h1>
 <p align="center">A medication reconciliation app built on Medplum (FHIR) with an AI-assisted bottle-capture workflow.</p>
 <p align="center">
   <a href="./LICENSE.txt">
@@ -6,7 +6,7 @@
   </a>
 </p>
 
-MediRec helps a nurse reconcile what a patient's EHR record says they're taking against what's
+TraceBack helps a nurse reconcile what a patient's EHR record says they're taking against what's
 actually in the medicine cabinet at home. A nurse photographs each pill bottle during a home visit;
 the app reads the label, resolves the drug to a standard code, and compares it against the
 patient's active `MedicationRequest`s in Medplum — flagging matches, dose conflicts, duplicate

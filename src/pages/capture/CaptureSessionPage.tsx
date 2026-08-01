@@ -1,13 +1,25 @@
 import { ActionIcon, Alert, Button, Card, Group, Loader, NumberInput, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useMedplum } from '@medplum/react';
-import { IconArrowLeft, IconCamera, IconCheck, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconCamera, IconCheck, IconPrinter, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JSX } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { captureVideoFrameToBase64Jpeg } from '../../capture/image';
 import { checkMed, getSummary, startSession } from '../../capture/medplumApi';
 import type { CheckMedResponse, MedInput, SessionStartResponse, SessionSummaryResponse } from '../../capture/types';
-import { NotInHomeCard, VerdictCard } from '../../components/VerdictCard';
+import { VerdictCard } from '../../components/VerdictCard';
+import { SessionReport } from '../../components/SessionReport';
+
+// Print rules for the "Generate Report" button below — only .reconciliation-report (rendered by
+// SessionReport) survives to the printed/PDF page, breaking out of this page's fixed full-screen
+// layout so it prints as a normal flowing document instead of a single clipped viewport.
+const PRINT_STYLES = `
+  @media print {
+    body * { visibility: hidden; }
+    .reconciliation-report, .reconciliation-report * { visibility: visible; }
+    .reconciliation-report { position: absolute; top: 0; left: 0; width: 100%; }
+  }
+`;
 
 const TOP_BAR_HEIGHT = 56;
 const BOTTOM_BAR_HEIGHT = 84;
@@ -378,28 +390,22 @@ export function CaptureSessionPage(): JSX.Element {
 
         {summary && (
           <>
-            <Title order={5} mb="xs">
-              Session summary
-            </Title>
-            <Text mb="xs">
-              {summary.summary.matched} matched · {summary.summary.needsReview} need review ·{' '}
-              {summary.summary.mustResolve} must resolve · {summary.summary.captured} captured total
-            </Text>
-            {summary.notInHome.length > 0 && (
-              <>
-                <Text fw={600} mb="xs">
-                  Never found
-                </Text>
-                <Stack gap="xs">
-                  {summary.notInHome.map((entry) => (
-                    <NotInHomeCard key={entry.matchKey} entry={entry} />
-                  ))}
-                </Stack>
-              </>
-            )}
+            <Group justify="space-between" mb="xs">
+              <Title order={5}>Session summary</Title>
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<IconPrinter size={14} />}
+                onClick={() => window.print()}
+              >
+                Generate Report
+              </Button>
+            </Group>
+            <SessionReport summary={summary} />
           </>
         )}
       </div>
+      <style>{PRINT_STYLES}</style>
 
       <div
         style={{

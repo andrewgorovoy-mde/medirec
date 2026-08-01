@@ -1,0 +1,223 @@
+.voice-agent-shell {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9998;
+  color: #172033;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.voice-agent-collapsed {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.voice-agent-collapsed__label {
+  display: grid;
+  gap: 2px;
+  max-width: 210px;
+  color: #172033;
+  font: inherit;
+  text-align: center;
+}
+
+.voice-agent-collapsed__label span {
+  overflow: hidden;
+  color: #0c3b58;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+}
+
+.voice-agent-collapsed__label strong {
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.teal-voice-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 35%, #3a1a52 0%, #2b123e 60%, #180a20 100%);
+  box-shadow: 0 24px 60px rgba(43, 18, 62, 0.45);
+  color: #0c3b58;
+  cursor: pointer;
+  isolation: isolate;
+  padding: 0;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.teal-voice-orb--collapsed {
+  width: 380px;
+  height: 380px;
+}
+
+.teal-voice-orb:hover:not(:disabled) {
+  filter: saturate(1.04);
+  transform: translateY(-1px);
+}
+
+.teal-voice-orb:disabled {
+  cursor: progress;
+  opacity: 0.86;
+}
+
+.teal-voice-orb--muted {
+  opacity: 0.62;
+}
+
+.teal-voice-orb--error::after {
+  position: absolute;
+  inset: 8%;
+  border: 2px solid rgba(180, 35, 24, 0.62);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+
+.teal-voice-orb:focus-visible,
+.voice-agent-aura-dev__button:focus-visible,
+.voice-agent-aura-dev__slider input:focus-visible {
+  outline: 3px solid rgba(46, 196, 182, 0.38);
+  outline-offset: 4px;
+}
+
+.agent-audio-visualizer-aura {
+  position: relative;
+  display: block;
+  width: var(--aura-size);
+  max-width: 100%;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.agent-audio-visualizer-aura__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.agent-audio-visualizer-aura[data-state="muted"] {
+  filter: saturate(0.7) brightness(0.78);
+}
+
+.agent-audio-visualizer-aura[data-state="error"] {
+  filter: saturate(0.72) brightness(0.9);
+}
+
+.voice-agent-error {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(180, 35, 24, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 245, 245, 0.96);
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.35;
+  max-width: 260px;
+  text-align: center;
+}
+
+.voice-agent-aura-dev {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 9997;
+  display: grid;
+  width: min(360px, calc(100vw - 32px));
+  justify-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(46, 196, 182, 0.24);
+  border-radius: 8px;
+  background: #062535;
+  box-shadow: 0 16px 34px rgba(12, 59, 88, 0.22);
+  color: #eefcfb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.voice-agent-aura-dev__visual {
+  width: min(320px, 100%);
+}
+
+.voice-agent-aura-dev__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.voice-agent-aura-dev__button {
+  min-height: 30px;
+  border: 1px solid rgba(46, 196, 182, 0.28);
+  border-radius: 8px;
+  background: transparent;
+  color: #eefcfb;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.voice-agent-aura-dev__button[aria-pressed="true"] {
+  border-color: #2ec4b6;
+  background: #2ec4b6;
+  color: #052b35;
+}
+
+.voice-agent-aura-dev__slider {
+  display: grid;
+  width: 100%;
+  gap: 4px;
+  color: rgba(238, 252, 251, 0.78);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.voice-agent-aura-dev__slider input {
+  accent-color: #2ec4b6;
+}
+
+@media (max-width: 520px) {
+  .voice-agent-aura-dev {
+    left: 16px;
+    right: 16px;
+    bottom: 150px;
+    width: auto;
+  }
+
+  .voice-agent-collapsed__label {
+    max-width: 176px;
+  }
+
+  .teal-voice-orb--collapsed {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teal-voice-orb {
+    transition: none;
+  }
+
+  .teal-voice-orb:hover:not(:disabled) {
+    transform: none;
+  }
+}

@@ -70,7 +70,16 @@ export default defineConfig(({ mode }) => {
   // exposes them to client bundle code. loadEnv with an empty prefix filter is only used here,
   // in Node config scope, to feed them into process.env for the dev middleware above.
   const env = loadEnv(mode, process.cwd(), '');
-  for (const key of ['GEMINI_API_KEY', 'MOSS_PROJECT_ID', 'MOSS_PROJECT_KEY', 'STEDI_API_KEY', 'STEDI_PROVIDER_NPI']) {
+  for (const key of [
+    'GEMINI_API_KEY',
+    'MOSS_PROJECT_ID',
+    'MOSS_PROJECT_KEY',
+    'STEDI_API_KEY',
+    'STEDI_PROVIDER_NPI',
+    'SURVEY_CLIENT_ID',
+    'SURVEY_CLIENT_SECRET',
+    'DEEPGRAM_API_KEY',
+  ]) {
     if (env[key]) {
       process.env[key] = env[key];
     }
@@ -83,6 +92,9 @@ export default defineConfig(({ mode }) => {
       apiDevPlugin('/api/extract', () => import('./api/extract')),
       apiDevPlugin('/api/eligibility', () => import('./api/eligibility')),
       apiDevPlugin('/api/extract-medlist', () => import('./api/extract-medlist')),
+      apiDevPlugin('/api/survey', () => import('./api/survey')),
+      apiDevPlugin('/api/survey-medication', () => import('./api/survey-medication')),
+      apiDevPlugin('/api/deepgram/token', () => import('./api/deepgram/token')),
     ],
     server: {
       host: 'localhost',
