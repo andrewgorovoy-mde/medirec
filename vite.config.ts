@@ -5,6 +5,7 @@ import dns from 'dns';
 import { copyFileSync, existsSync } from 'fs';
 import path from 'path';
 import type { Plugin } from 'vite';
+import type { ViteDevServer } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 
 dns.setDefaultResultOrder('verbatim');
@@ -15,44 +16,71 @@ if (!existsSync(path.join(__dirname, '.env'))) {
 
 dns.setDefaultResultOrder('verbatim');
 
-// Dev-only stand-in for the Vercel serverless function at api/extract.ts, so
-// `npm run dev` can hit /api/extract without needing `vercel dev`.
-function apiExtractDevPlugin(): Plugin {
+type DevApiHandler = (
+  req: { method?: string; body?: unknown },
+  res: DevApiResponse
+) => Promise<void> | void;
+
+interface DevApiResponse {
+  status(code: number): DevApiResponse;
+  json(body: unknown): void;
+  setHeader(name: string, value: string): void;
+}
+
+function createJsonResponse(res: { statusCode: number; setHeader(name: string, value: string): void; end(body: string): void }) {
   return {
-    name: 'api-extract-dev-middleware',
-    configureServer(server) {
-      server.middlewares.use('/api/extract', (req, res) => {
-        if (req.method !== 'POST') {
-          res.statusCode = 405;
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
-          return;
+    status(code: number) {
+      res.statusCode = code;
+      return this;
+    },
+    setHeader(name: string, value: string) {
+      res.setHeader(name, value);
+    },
+    json(body: unknown) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(body));
+    },
+  };
+}
+
+function registerDevApiRoute(
+  server: ViteDevServer,
+  pathName: string,
+  loadHandler: () => Promise<DevApiHandler>
+): void {
+  server.middlewares.use(pathName, (req, res) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      void (async () => {
+        try {
+          const rawBody = Buffer.concat(chunks).toString('utf-8');
+          const handler = await loadHandler();
+          await handler({ method: req.method, body: rawBody || undefined }, createJsonResponse(res));
+        } catch (err) {
+          console.error(`${pathName} dev middleware failed`, err);
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'API route failed' }));
         }
+      })();
+    });
+  });
+}
 
-        const chunks: Buffer[] = [];
-        req.on('data', (chunk) => chunks.push(chunk));
-        req.on('end', () => {
-          void (async () => {
-            try {
-              const { extractMed } = await import('./api/extract');
-              const body = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
-              const image = body?.image;
-              if (!image || typeof image !== 'string') {
-                res.statusCode = 400;
-                res.end(JSON.stringify({ error: 'Missing "image" (base64 JPEG) in request body' }));
-                return;
-              }
-
-              const result = await extractMed(image);
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(result));
-            } catch (err) {
-              console.error('extract dev middleware failed', err);
-              res.statusCode = 500;
-              res.end(JSON.stringify({ error: 'Extraction failed' }));
-            }
-          })();
-        });
-      });
+// Dev-only stand-ins for Vercel serverless functions, so `npm run dev` can hit
+// local API routes without needing `vercel dev`.
+function apiDevPlugin(): Plugin {
+  return {
+    name: 'api-dev-middleware',
+    configureServer(server) {
+      registerDevApiRoute(server, '/api/extract', async () => (await import('./api/extract')).default);
+      registerDevApiRoute(server, '/api/deepgram/token', async () => (await import('./api/deepgram/token')).default);
+      registerDevApiRoute(
+        server,
+        '/api/medications/identify',
+        async () => (await import('./api/medications/identify')).default
+      );
     },
   };
 }
@@ -64,7 +92,17 @@ export default defineConfig(({ mode }) => {
   // loadEnv with an empty prefix filter is only used here, in Node config scope, to feed them
   // into process.env for the dev middleware above.
   const env = loadEnv(mode, process.cwd(), '');
-  for (const key of ['GEMINI_API_KEY', 'MOSS_PROJECT_ID', 'MOSS_PROJECT_KEY']) {
+  for (const key of [
+    'GEMINI_API_KEY',
+    'MOSS_PROJECT_ID',
+    'MOSS_PROJECT_KEY',
+    'DEEPGRAM_API_KEY',
+    'DEEPGRAM_AUTH_GRANT_URL',
+    'DEEPGRAM_TOKEN_TTL_SECONDS',
+    'MEDICATION_VISION_API_URL',
+    'MEDICATION_VISION_API_KEY',
+    'MEDICATION_VISION_TIMEOUT_MS',
+  ]) {
     if (env[key]) {
       process.env[key] = env[key];
     }
@@ -72,7 +110,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     envPrefix: ['MEDPLUM_'],
-    plugins: [react(), apiExtractDevPlugin()],
+    plugins: [react(), apiDevPlugin()],
     server: {
       host: 'localhost',
       port: 3000,
