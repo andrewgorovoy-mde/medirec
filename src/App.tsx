@@ -17,6 +17,7 @@ import { PatientPage } from './pages/PatientPage';
 import { ResourcePage } from './pages/ResourcePage';
 import { ResourceCreatePage } from './pages/ResourceCreatePage';
 import { SignInPage } from './pages/SignInPage';
+import { PersistentVoiceAgent } from './voice/PersistentVoiceAgent';
 
 export function App(): JSX.Element | null {
   const medplum = useMedplum();
@@ -36,6 +37,7 @@ export function App(): JSX.Element | null {
         },
       ]}
     >
+      <PersistentVoiceAgent />
       <ErrorBoundary>
         <Suspense fallback={<Loading />}>
           <Routes>
