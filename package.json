@@ -42,7 +42,7 @@
     "node": "^22.18.0 || >=24.2.0"
   },
   "dependencies": {
-    "@deepgram/agents-widget": "^0.1.7",
+    "@deepgram/react": "^0.1.0",
     "@moss-dev/moss": "^1.4.1"
   }
 }

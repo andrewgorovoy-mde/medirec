@@ -1,17 +1,33 @@
-import { init } from '@deepgram/agents-widget';
-import type { AgentSettingsObject } from '@deepgram/agents';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, JSX } from 'react';
+// SPDX-FileCopyrightText: Copyright Orangebot, Inc. and Medplum contributors
+// SPDX-License-Identifier: Apache-2.0
+import {
+  AgentProvider,
+  useAgentConversation,
+  useAgentMicrophone,
+  useAgentMode,
+  useAgentPlayer,
+  useAgentSession,
+  useAgentState,
+} from '@deepgram/react';
+import type { AgentSessionConfig, AgentSettingsObject, MicrophoneOptions } from '@deepgram/react';
+import { useEffect, useMemo, useState } from 'react';
+import type { JSX } from 'react';
+import { AuraDevTestPanel } from './AuraDevTestPanel';
+import type { VoiceVisualState } from './AgentAudioVisualizerAura';
+import { TealVoiceOrb } from './TealVoiceOrb';
+import './voiceOrb.css';
 
 const BILINGUAL_GREETING =
   'Hello! I can help you review your medications. You can speak in English or Spanish. Hola, puedo ayudarle a revisar sus medicamentos. Puede hablar en inglés o español.';
+const DEVELOPMENT_LABEL = 'Multilingual Voice Test — English / Español';
+const HOME_PROMPT = 'Tap to speak or ask a question.';
+const SELECTED_VOICE_MODEL = 'aura-2-selena-es';
 
 const PROMPT = `
 You are a multilingual medication-reconciliation voice assistant used for a prototype demonstration.
 
-Match the language of each user message independently.
+Match the language of each user message independently. If the user speaks English, respond in English. If the user speaks Spanish, respond in Spanish. If the user changes languages, follow the language used in the latest message.
 Support English and Spanish.
-If the user changes languages, respond in the language they just used.
 Keep responses short and conversational.
 
 For this initial test:
@@ -29,8 +45,6 @@ You may ask simple questions such as:
 - Would you like to scan a medication?
 `.trim();
 
-type VoiceAgentStatus = 'available' | 'connecting' | 'listening' | 'speaking' | 'muted' | 'error';
-
 type FluxMultilingualListenProvider = {
   type: 'deepgram';
   version: 'v2';
@@ -38,9 +52,19 @@ type FluxMultilingualListenProvider = {
   language_hints: ['en', 'es'];
 };
 
+type SelenaBilingualSpeakProvider = {
+  type: 'deepgram';
+  version: 'v1';
+  model: typeof SELECTED_VOICE_MODEL;
+  speed: 0.98;
+};
+
 type MultilingualAgentSettings = AgentSettingsObject & {
   listen: {
     provider: FluxMultilingualListenProvider;
+  };
+  speak: {
+    provider: SelenaBilingualSpeakProvider;
   };
 };
 
@@ -69,19 +93,40 @@ const AGENT_CONFIG: MultilingualAgentSettings = {
   speak: {
     provider: {
       type: 'deepgram',
-      model: 'aura-2-javier-es',
+      version: 'v1',
+      model: SELECTED_VOICE_MODEL,
+      speed: 0.98,
     },
   },
   greeting: BILINGUAL_GREETING,
 };
 
-const STATUS_LABEL: Record<VoiceAgentStatus, string> = {
-  available: 'Available',
-  connecting: 'Connecting',
-  listening: 'Listening',
-  speaking: 'Speaking',
-  muted: 'Muted',
-  error: 'Error',
+const MICROPHONE_OPTIONS = {
+  vad: true,
+  noiseSuppression: true,
+  echoCancellation: true,
+} satisfies MicrophoneOptions & { vad: boolean };
+
+const STATUS_MESSAGE: Record<VoiceVisualState, string> = {
+  idle: 'Tap to start',
+  disconnected: 'Voice assistant disconnected',
+  connecting: 'Connecting…',
+  listening: 'I’m listening…',
+  thinking: 'Checking your medications…',
+  speaking: 'Speaking…',
+  muted: 'Microphone muted',
+  error: 'Unable to connect',
+};
+
+const ORB_ACTION_LABEL: Record<VoiceVisualState, string> = {
+  idle: 'Start voice medication assistant microphone',
+  disconnected: 'Start voice medication assistant microphone',
+  connecting: 'Voice medication assistant connection in progress',
+  listening: 'Mute voice medication assistant microphone',
+  thinking: 'Mute voice medication assistant microphone',
+  speaking: 'Interrupt voice medication assistant speech',
+  muted: 'Unmute voice medication assistant microphone',
+  error: 'Retry voice medication assistant connection',
 };
 
 function extractTokenFromText(text: string, contentType: string): string {
@@ -124,264 +169,340 @@ async function fetchDeepgramToken(): Promise<string> {
   return extractTokenFromText(text, response.headers.get('Content-Type') ?? '');
 }
 
-function hasMicIcon(button: HTMLButtonElement): boolean {
-  return Boolean(button.querySelector('svg path[d^="M12 2a3"]'));
-}
-
-function hasSpeakerIcon(button: HTMLButtonElement): boolean {
-  return Boolean(button.querySelector('svg polygon[points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"]'));
-}
-
-function hasMutedMicIcon(button: HTMLButtonElement): boolean {
-  return Boolean(button.querySelector('svg line[x1="2"][x2="22"][y1="2"][y2="22"]'));
-}
-
-function hasMutedSpeakerIcon(button: HTMLButtonElement): boolean {
-  return Boolean(button.querySelector('svg line[x1="22"][x2="16"][y1="9"][y2="15"]'));
-}
-
-function applyWidgetAccessibilityLabels(): boolean {
-  const roots = Array.from(document.querySelectorAll<HTMLElement>('[data-dg-agent]'));
-  const root = roots.at(-1);
-  if (!root) {
-    return false;
+function agentErrorMessage(message: unknown): string {
+  if (message instanceof Error) {
+    return message.message || 'Deepgram voice agent error';
   }
+  if (typeof message === 'object' && message) {
+    const payload = message as { message?: unknown; description?: unknown; error?: unknown };
+    if (typeof payload.message === 'string') {
+      return payload.message;
+    }
+    if (typeof payload.description === 'string') {
+      return payload.description;
+    }
+    if (typeof payload.error === 'string') {
+      return payload.error;
+    }
+  }
+  return 'Deepgram voice agent error';
+}
 
-  let micMuted = false;
-  const controls = Array.from(root.querySelectorAll<HTMLButtonElement>('button'));
-  for (const button of controls) {
-    if (hasMicIcon(button)) {
-      micMuted = hasMutedMicIcon(button);
-      button.setAttribute('aria-label', micMuted ? 'Unmute microphone' : 'Mute microphone');
-    } else if (hasSpeakerIcon(button)) {
-      const speakerMuted = hasMutedSpeakerIcon(button);
-      button.setAttribute('aria-label', speakerMuted ? 'Unmute speaker audio' : 'Mute speaker audio');
+function useVoiceVisualState(externalError: string | undefined): {
+  visualState: VoiceVisualState;
+  errorMessage: string | undefined;
+  setErrorMessage: (message: string | undefined) => void;
+  setThinking: (thinking: boolean) => void;
+} {
+  const session = useAgentSession();
+  const { isConnecting, isConnected, isDisconnected, isReconnecting } = useAgentState();
+  const { isListening, isSpeaking } = useAgentMode();
+  const { micActive, micMuted } = useAgentMicrophone();
+  const [isThinking, setThinking] = useState(false);
+  const [sessionError, setSessionError] = useState<string>();
+
+  useEffect(() => {
+    const clearThinking = () => setThinking(false);
+    const markThinking = () => {
+      setSessionError(undefined);
+      setThinking(true);
+    };
+    const markAgentError = (message: unknown) => {
+      clearThinking();
+      setSessionError(agentErrorMessage(message));
+    };
+
+    session.on('agent-thinking', markThinking);
+    session.on('agent-started-speaking', clearThinking);
+    session.on('agent-audio-done', clearThinking);
+    session.on('settings-applied', clearThinking);
+    session.on('user-started-speaking', clearThinking);
+    session.on('disconnected', clearThinking);
+    session.on('error', markAgentError);
+    session.on('sdk-error', markAgentError);
+
+    return () => {
+      session.off('agent-thinking', markThinking);
+      session.off('agent-started-speaking', clearThinking);
+      session.off('agent-audio-done', clearThinking);
+      session.off('settings-applied', clearThinking);
+      session.off('user-started-speaking', clearThinking);
+      session.off('disconnected', clearThinking);
+      session.off('error', markAgentError);
+      session.off('sdk-error', markAgentError);
+    };
+  }, [session]);
+
+  const errorMessage = externalError ?? sessionError;
+  const visualState = useMemo<VoiceVisualState>(() => {
+    if (errorMessage) {
+      return 'error';
+    }
+    if (isConnecting || isReconnecting) {
+      return 'connecting';
+    }
+    if (micActive && micMuted) {
+      return 'muted';
+    }
+    if (isSpeaking) {
+      return 'speaking';
+    }
+    if (isThinking && isConnected) {
+      return 'thinking';
+    }
+    if (isListening && isConnected) {
+      return 'listening';
+    }
+    if (isDisconnected) {
+      return 'disconnected';
+    }
+    return 'idle';
+  }, [
+    errorMessage,
+    isConnecting,
+    isConnected,
+    isDisconnected,
+    isListening,
+    isReconnecting,
+    isSpeaking,
+    isThinking,
+    micActive,
+    micMuted,
+  ]);
+
+  return {
+    visualState,
+    errorMessage,
+    setErrorMessage: setSessionError,
+    setThinking,
+  };
+}
+
+function VoiceAgentPanel({
+  tokenError,
+  clearTokenError,
+}: {
+  tokenError?: string;
+  clearTokenError: () => void;
+}): JSX.Element {
+  const [expanded, setExpanded] = useState(false);
+  const { conversation, clearConversation } = useAgentConversation();
+  const { start, stop, isActive, isConnecting, isReconnecting } = useAgentState();
+  const { micMuted, setMicMuted } = useAgentMicrophone();
+  const { setOutputMuted } = useAgentPlayer();
+  const { visualState, errorMessage, setErrorMessage, setThinking } = useVoiceVisualState(tokenError);
+  const isBusy = isConnecting || isReconnecting;
+
+  async function startSession() {
+    clearTokenError();
+    setErrorMessage(undefined);
+    setThinking(false);
+    try {
+      await start();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Unable to start the Deepgram voice session');
     }
   }
 
-  const textInput = root.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea');
-  textInput?.setAttribute('aria-label', 'Voice agent text input');
-
-  return micMuted;
-}
-
-function displayStatus(status: Exclude<VoiceAgentStatus, 'muted'>, micMuted: boolean): VoiceAgentStatus {
-  if (status === 'error') {
-    return 'error';
+  function endSession() {
+    setMicMuted(false);
+    setOutputMuted(false);
+    setThinking(false);
+    setErrorMessage(undefined);
+    clearTokenError();
+    stop();
+    clearConversation();
   }
-  return micMuted && (status === 'listening' || status === 'speaking') ? 'muted' : status;
+
+  function interruptSpeech() {
+    setOutputMuted(true);
+    window.setTimeout(() => setOutputMuted(false), 60);
+  }
+
+  function handleOrbClick() {
+    setExpanded(true);
+    if (visualState === 'idle' || visualState === 'disconnected' || visualState === 'error') {
+      void startSession();
+      return;
+    }
+    if (visualState === 'muted') {
+      setMicMuted(false);
+      return;
+    }
+    if (visualState === 'speaking') {
+      interruptSpeech();
+      return;
+    }
+    if (visualState === 'listening' || visualState === 'thinking') {
+      setMicMuted(true);
+    }
+  }
+
+  const statusMessage = STATUS_MESSAGE[visualState];
+  const primaryActionLabel = ORB_ACTION_LABEL[visualState];
+  const primaryControlLabel =
+    visualState === 'muted'
+      ? 'Unmute'
+      : visualState === 'idle' || visualState === 'disconnected' || visualState === 'error'
+        ? 'Start'
+        : visualState === 'speaking'
+          ? 'Interrupt'
+          : 'Mute';
+
+  return (
+    <aside
+      className={expanded ? 'voice-agent-shell voice-agent-shell--expanded' : 'voice-agent-shell'}
+      aria-label="Medication voice assistant"
+    >
+      {!expanded ? (
+        <div className="voice-agent-collapsed">
+          <TealVoiceOrb
+            visualState={visualState}
+            expanded={false}
+            disabled={isBusy}
+            ariaLabel={primaryActionLabel}
+            onClick={handleOrbClick}
+          />
+          <button
+            type="button"
+            className="voice-agent-collapsed__label"
+            onClick={() => setExpanded(true)}
+            aria-label="Open medication voice assistant panel"
+          >
+            <span>{statusMessage}</span>
+            <em>{HOME_PROMPT}</em>
+            <strong>{import.meta.env.DEV ? DEVELOPMENT_LABEL : 'English / Español'}</strong>
+          </button>
+        </div>
+      ) : (
+        <div className="voice-agent-panel">
+          <div className="voice-agent-panel__header">
+            <div>
+              <h2>Medication Voice Assistant</h2>
+              <p>{import.meta.env.DEV ? DEVELOPMENT_LABEL : 'English / Español'}</p>
+            </div>
+            <button
+              type="button"
+              className="voice-agent-icon-button"
+              onClick={() => setExpanded(false)}
+              aria-label="Collapse voice assistant"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="voice-agent-panel__orb">
+            <TealVoiceOrb
+              visualState={visualState}
+              expanded
+              disabled={isBusy}
+              ariaLabel={primaryActionLabel}
+              onClick={handleOrbClick}
+            />
+          </div>
+
+          <div className="voice-agent-status" aria-label="Voice assistant connection status" aria-live="polite">
+            {statusMessage}
+          </div>
+
+          {errorMessage && (
+            <p className="voice-agent-error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+
+          <div className="voice-agent-transcript" aria-label="Voice assistant transcript">
+            {conversation.length === 0 ? (
+              <p className="voice-agent-transcript__empty">Transcript appears here during this test session.</p>
+            ) : (
+              conversation.slice(-16).map((line) => (
+                <p className={`voice-agent-transcript__line voice-agent-transcript__line--${line.role}`} key={line.id}>
+                  <span>{line.role === 'assistant' ? 'Assistant' : 'You'}</span>
+                  {line.content}
+                </p>
+              ))
+            )}
+          </div>
+
+          <div className="voice-agent-controls">
+            <button
+              type="button"
+              className="voice-agent-control-button"
+              onClick={() => {
+                if (visualState === 'idle' || visualState === 'disconnected' || visualState === 'error') {
+                  void startSession();
+                } else if (visualState === 'muted') {
+                  setMicMuted(false);
+                } else if (visualState === 'speaking') {
+                  interruptSpeech();
+                } else {
+                  setMicMuted(!micMuted);
+                }
+              }}
+              disabled={isBusy}
+              aria-label={primaryActionLabel}
+            >
+              {primaryControlLabel}
+            </button>
+            <button
+              type="button"
+              className="voice-agent-control-button voice-agent-control-button--quiet"
+              onClick={endSession}
+              disabled={!isActive || isBusy}
+              aria-label="Stop voice session and release microphone"
+            >
+              End
+            </button>
+          </div>
+
+          <p className="voice-agent-voice-label">Voice: {SELECTED_VOICE_MODEL}</p>
+        </div>
+      )}
+    </aside>
+  );
 }
 
-const panelStyle = {
-  position: 'fixed',
-  right: 24,
-  bottom: 92,
-  zIndex: 9998,
-  width: 300,
-  maxWidth: 'calc(100vw - 32px)',
-  padding: 12,
-  border: '1px solid rgba(15, 23, 42, 0.16)',
-  borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.96)',
-  boxShadow: '0 12px 32px rgba(15, 23, 42, 0.16)',
-  color: '#111827',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  pointerEvents: 'auto',
-} satisfies CSSProperties;
-
-const titleStyle = {
-  margin: 0,
-  fontSize: 13,
-  fontWeight: 700,
-  lineHeight: 1.35,
-} satisfies CSSProperties;
-
-const statusStyle = {
-  marginTop: 8,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 8,
-  fontSize: 12,
-} satisfies CSSProperties;
-
-const chipsStyle = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 6,
-  marginTop: 10,
-} satisfies CSSProperties;
-
-const detailStyle = {
-  margin: '8px 0 0',
-  color: '#b42318',
-  fontSize: 12,
-  lineHeight: 1.35,
-} satisfies CSSProperties;
-
-export function PersistentVoiceAgent(): JSX.Element | null {
-  const [status, setStatus] = useState<Exclude<VoiceAgentStatus, 'muted'>>('available');
-  const [micMuted, setMicMuted] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
-  const speakingTimer = useRef<number | undefined>(undefined);
-
-  const renderedStatus = displayStatus(status, micMuted);
+export function PersistentVoiceAgent(): JSX.Element {
+  const [tokenError, setTokenError] = useState<string>();
 
   const tokenFactory = useMemo(() => {
     return async () => {
-      setStatus('connecting');
-      setErrorMessage(undefined);
+      setTokenError(undefined);
       try {
         return await fetchDeepgramToken();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Deepgram token request failed';
-        setStatus('error');
-        setErrorMessage(message);
+        setTokenError(message);
         throw err;
       }
     };
   }, []);
 
-  useEffect(() => {
-    const clearSpeakingTimer = () => {
-      if (speakingTimer.current) {
-        window.clearTimeout(speakingTimer.current);
-        speakingTimer.current = undefined;
-      }
-    };
-
-    const markSpeaking = () => {
-      clearSpeakingTimer();
-      setStatus('speaking');
-      speakingTimer.current = window.setTimeout(() => setStatus('listening'), 5000);
-    };
-
-    const refreshAccessibility = () => {
-      setMicMuted(applyWidgetAccessibilityLabels());
-    };
-
-    const destroy = init({
-      tokenFactory,
+  const agentSessionConfig = useMemo<AgentSessionConfig>(
+    () => ({
+      auth: { tokenFactory },
       agent: AGENT_CONFIG,
-      layout: 'floating',
-      placement: 'bottom-right',
-      defaultOpen: true,
-      dismissible: true,
-      showTranscript: true,
-      showMicToggle: true,
-      showSpeakerToggle: true,
-      showTextInput: true,
-      playerSampleRate: 24_000,
-      colorScheme: 'light',
-      theme: {
-        primary: '#2563eb',
-        primaryHover: '#1d4ed8',
-        primaryActive: '#1e40af',
-        onPrimary: '#ffffff',
-        background: '#ffffff',
-        backgroundRaised: '#f8fafc',
-        backgroundInput: '#f8fafc',
-        text: '#111827',
-        textMuted: '#4b5563',
-        border: 'rgba(15, 23, 42, 0.14)',
-        panelRadius: '8px',
-        buttonRadius: '8px',
-        inputRadius: '8px',
-        messageRadius: '8px',
-        fabSize: 56,
-        font: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      audio: {
+        input: { encoding: 'linear16', sampleRate: 16_000 },
+        output: { encoding: 'linear16', sampleRate: 24_000 },
       },
-      text: {
-        name: 'Medication Voice Test',
-        startLabel: 'Start microphone',
-        stopLabel: 'Stop microphone',
-        connectingLabel: 'Connecting voice agent...',
-        inputPlaceholder: 'Type a test message in English or Spanish...',
-        emptyStateHint: 'Click Start microphone when you are ready to test English or Spanish.',
-      },
-      on: {
-        onConnect: () => {
-          clearSpeakingTimer();
-          setStatus('listening');
-          setErrorMessage(undefined);
-        },
-        onDisconnect: () => {
-          clearSpeakingTimer();
-          setStatus('available');
-          setMicMuted(false);
-        },
-        onReconnecting: () => {
-          clearSpeakingTimer();
-          setStatus('connecting');
-        },
-        onAgentStartedSpeaking: markSpeaking,
-        onMessage: (message) => {
-          if (message.role === 'assistant') {
-            markSpeaking();
-          } else if (message.role === 'user') {
-            clearSpeakingTimer();
-            setStatus('listening');
-          }
-        },
-        onError: (err) => {
-          clearSpeakingTimer();
-          setStatus('error');
-          setErrorMessage(err.message || 'Deepgram voice agent error');
-        },
-        onAgentError: () => {
-          clearSpeakingTimer();
-          setStatus('error');
-          setErrorMessage('Deepgram voice agent returned an error');
-        },
-      },
-    });
-
-    refreshAccessibility();
-    const observer = new MutationObserver(refreshAccessibility);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label'] });
-
-    return () => {
-      clearSpeakingTimer();
-      observer.disconnect();
-      destroy();
-    };
-  }, [tokenFactory]);
+    }),
+    [tokenFactory]
+  );
 
   return (
-    <aside aria-label="Multilingual voice agent test status" style={panelStyle}>
-      {import.meta.env.DEV && <p style={titleStyle}>Multilingual Voice Test — English / Español</p>}
-      <div aria-live="polite" role="status" aria-label="Voice agent connection status" style={statusStyle}>
-        <span>Connection status</span>
-        <strong>{STATUS_LABEL[renderedStatus]}</strong>
-      </div>
-      <div aria-label="Voice agent states" style={chipsStyle}>
-        {(Object.keys(STATUS_LABEL) as VoiceAgentStatus[]).map((key) => {
-          const active = renderedStatus === key;
-          return (
-            <span
-              aria-current={active ? 'true' : undefined}
-              key={key}
-              style={{
-                border: `1px solid ${active ? '#2563eb' : 'rgba(15, 23, 42, 0.16)'}`,
-                borderRadius: 999,
-                background: active ? '#eff6ff' : '#ffffff',
-                color: active ? '#1d4ed8' : '#374151',
-                fontSize: 11,
-                fontWeight: active ? 700 : 500,
-                lineHeight: 1,
-                padding: '5px 7px',
-              }}
-            >
-              {STATUS_LABEL[key]}
-            </span>
-          );
-        })}
-      </div>
-      {errorMessage && (
-        <p role="alert" style={detailStyle}>
-          {errorMessage}
-        </p>
-      )}
-    </aside>
+    <AgentProvider
+      config={agentSessionConfig}
+      microphone
+      microphoneOptions={MICROPHONE_OPTIONS}
+      tts
+      playerSampleRate={24_000}
+      autoStart={false}
+    >
+      <VoiceAgentPanel tokenError={tokenError} clearTokenError={() => setTokenError(undefined)} />
+      <AuraDevTestPanel />
+    </AgentProvider>
   );
 }
+
+export { AGENT_CONFIG, SELECTED_VOICE_MODEL };
