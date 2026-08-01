@@ -1,0 +1,590 @@
+[
+  {
+    "id": "6918",
+    "text": "metoprolol. metoprolol tartrate. metoprolol succinate. Lopressor. Toprol-XL. Toprol. beta blocker. used for high blood pressure. used for heart failure. used for chest pain. used for irregular heartbeat. heart pill. blood pressure pill. the one for my heart. pill that slows my heart down",
+    "metadata": {
+      "ingredientRxcui": "6918",
+      "generic": "metoprolol",
+      "drugClass": "beta blocker",
+      "brands": "Lopressor|Toprol-XL|Toprol",
+      "commonStrengths": "12.5 mg|25 mg|50 mg|100 mg|200 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "20352",
+    "text": "carvedilol. Coreg. beta blocker. used for heart failure. used for high blood pressure. heart pill. blood pressure pill. the twice a day heart one",
+    "metadata": {
+      "ingredientRxcui": "20352",
+      "generic": "carvedilol",
+      "drugClass": "beta blocker",
+      "brands": "Coreg",
+      "commonStrengths": "3.125 mg|6.25 mg|12.5 mg|25 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "29046",
+    "text": "lisinopril. Zestril. Prinivil. ACE inhibitor. used for high blood pressure. used for heart failure. used for kidney protection. blood pressure pill. pressure pill. the little pink one for pressure. the one that makes me cough",
+    "metadata": {
+      "ingredientRxcui": "29046",
+      "generic": "lisinopril",
+      "drugClass": "ACE inhibitor",
+      "brands": "Zestril|Prinivil",
+      "commonStrengths": "2.5 mg|5 mg|10 mg|20 mg|40 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "52175",
+    "text": "losartan. losartan potassium. Cozaar. ARB. used for high blood pressure. used for kidney protection. blood pressure pill. pressure pill",
+    "metadata": {
+      "ingredientRxcui": "52175",
+      "generic": "losartan",
+      "drugClass": "ARB",
+      "brands": "Cozaar",
+      "commonStrengths": "25 mg|50 mg|100 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "17767",
+    "text": "amlodipine. amlodipine besylate. Norvasc. calcium channel blocker. used for high blood pressure. used for chest pain. blood pressure pill. the one that swells my ankles. pressure pill",
+    "metadata": {
+      "ingredientRxcui": "17767",
+      "generic": "amlodipine",
+      "drugClass": "calcium channel blocker",
+      "brands": "Norvasc",
+      "commonStrengths": "2.5 mg|5 mg|10 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "4603",
+    "text": "furosemide. Lasix. loop diuretic. used for fluid overload. used for swelling. used for heart failure. used for edema. water pill. fluid pill. the pill that makes me pee. the one for swelling. the pill that keeps me up at night",
+    "metadata": {
+      "ingredientRxcui": "4603",
+      "generic": "furosemide",
+      "drugClass": "loop diuretic",
+      "brands": "Lasix",
+      "commonStrengths": "20 mg|40 mg|80 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "38413",
+    "text": "torsemide. Demadex. loop diuretic. used for fluid overload. used for swelling. used for heart failure. water pill. fluid pill. the one for swelling",
+    "metadata": {
+      "ingredientRxcui": "38413",
+      "generic": "torsemide",
+      "drugClass": "loop diuretic",
+      "brands": "Demadex",
+      "commonStrengths": "10 mg|20 mg|40 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "9997",
+    "text": "spironolactone. Aldactone. potassium-sparing diuretic. used for heart failure. used for fluid overload. used for high blood pressure. water pill. fluid pill. the potassium one",
+    "metadata": {
+      "ingredientRxcui": "9997",
+      "generic": "spironolactone",
+      "drugClass": "potassium-sparing diuretic",
+      "brands": "Aldactone",
+      "commonStrengths": "12.5 mg|25 mg|50 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "5487",
+    "text": "hydrochlorothiazide. Microzide. HCTZ. thiazide diuretic. used for high blood pressure. used for fluid retention. water pill. fluid pill. HCTZ. the little water pill",
+    "metadata": {
+      "ingredientRxcui": "5487",
+      "generic": "hydrochlorothiazide",
+      "drugClass": "thiazide diuretic",
+      "brands": "Microzide|HCTZ",
+      "commonStrengths": "12.5 mg|25 mg|50 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "83367",
+    "text": "atorvastatin. atorvastatin calcium. Lipitor. statin. used for high cholesterol. cholesterol pill. the cholesterol one. statin",
+    "metadata": {
+      "ingredientRxcui": "83367",
+      "generic": "atorvastatin",
+      "drugClass": "statin",
+      "brands": "Lipitor",
+      "commonStrengths": "10 mg|20 mg|40 mg|80 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "36567",
+    "text": "simvastatin. Zocor. statin. used for high cholesterol. cholesterol pill. the night time cholesterol one. statin",
+    "metadata": {
+      "ingredientRxcui": "36567",
+      "generic": "simvastatin",
+      "drugClass": "statin",
+      "brands": "Zocor",
+      "commonStrengths": "10 mg|20 mg|40 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "3407",
+    "text": "digoxin. Lanoxin. cardiac glycoside. used for heart failure. used for irregular heartbeat. used for atrial fibrillation. heart pill. the tiny white heart pill. digitalis",
+    "metadata": {
+      "ingredientRxcui": "3407",
+      "generic": "digoxin",
+      "drugClass": "cardiac glycoside",
+      "brands": "Lanoxin",
+      "commonStrengths": "0.125 mg|0.25 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "3443",
+    "text": "diltiazem. diltiazem hydrochloride. Cardizem. Tiazac. calcium channel blocker. used for high blood pressure. used for irregular heartbeat. used for chest pain. heart pill. blood pressure pill",
+    "metadata": {
+      "ingredientRxcui": "3443",
+      "generic": "diltiazem",
+      "drugClass": "calcium channel blocker",
+      "brands": "Cardizem|Tiazac",
+      "commonStrengths": "30 mg|60 mg|120 mg|180 mg|240 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1202",
+    "text": "atenolol. Tenormin. beta blocker. used for high blood pressure. used for chest pain. blood pressure pill. heart pill",
+    "metadata": {
+      "ingredientRxcui": "1202",
+      "generic": "atenolol",
+      "drugClass": "beta blocker",
+      "brands": "Tenormin",
+      "commonStrengths": "25 mg|50 mg|100 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1656340",
+    "text": "sacubitril / valsartan. Entresto. ARNI. used for heart failure. the expensive heart one. heart failure pill. the new heart pill",
+    "metadata": {
+      "ingredientRxcui": "1656340",
+      "generic": "sacubitril / valsartan",
+      "drugClass": "ARNI",
+      "brands": "Entresto",
+      "commonStrengths": "24/26 mg|49/51 mg|97/103 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "8591",
+    "text": "potassium chloride. Klor-Con. K-Dur. electrolyte supplement. used for low potassium. potassium. the big horse pill. the huge white one. K pill",
+    "metadata": {
+      "ingredientRxcui": "8591",
+      "generic": "potassium chloride",
+      "drugClass": "electrolyte supplement",
+      "brands": "Klor-Con|K-Dur",
+      "commonStrengths": "8 mEq|10 mEq|20 mEq",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "11289",
+    "text": "warfarin. warfarin sodium. Coumadin. Jantoven. anticoagulant. used for blood clots. used for stroke prevention. used for atrial fibrillation. blood thinner. the thinner. rat poison one. the one I get blood tests for",
+    "metadata": {
+      "ingredientRxcui": "11289",
+      "generic": "warfarin",
+      "drugClass": "anticoagulant",
+      "brands": "Coumadin|Jantoven",
+      "commonStrengths": "1 mg|2 mg|2.5 mg|5 mg|7.5 mg|10 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1364430",
+    "text": "apixaban. Eliquis. anticoagulant. used for blood clots. used for stroke prevention. used for atrial fibrillation. blood thinner. the thinner. the expensive blood thinner",
+    "metadata": {
+      "ingredientRxcui": "1364430",
+      "generic": "apixaban",
+      "drugClass": "anticoagulant",
+      "brands": "Eliquis",
+      "commonStrengths": "2.5 mg|5 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1114195",
+    "text": "rivaroxaban. Xarelto. anticoagulant. used for blood clots. used for stroke prevention. blood thinner. the thinner",
+    "metadata": {
+      "ingredientRxcui": "1114195",
+      "generic": "rivaroxaban",
+      "drugClass": "anticoagulant",
+      "brands": "Xarelto",
+      "commonStrengths": "10 mg|15 mg|20 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "32968",
+    "text": "clopidogrel. clopidogrel bisulfate. Plavix. antiplatelet. used for stroke prevention. used for heart attack prevention. used for after a stent. blood thinner. the stent pill. thinner",
+    "metadata": {
+      "ingredientRxcui": "32968",
+      "generic": "clopidogrel",
+      "drugClass": "antiplatelet",
+      "brands": "Plavix",
+      "commonStrengths": "75 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1191",
+    "text": "aspirin. Bayer. Ecotrin. antiplatelet. used for heart attack prevention. used for stroke prevention. used for pain. baby aspirin. the little orange one. aspirin. 81",
+    "metadata": {
+      "ingredientRxcui": "1191",
+      "generic": "aspirin",
+      "drugClass": "antiplatelet",
+      "brands": "Bayer|Ecotrin",
+      "commonStrengths": "81 mg|325 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "6809",
+    "text": "metformin. metformin hydrochloride. Glucophage. Glucophage XR. biguanide. used for type 2 diabetes. sugar pill. diabetes pill. the one for my sugar. the big one for diabetes",
+    "metadata": {
+      "ingredientRxcui": "6809",
+      "generic": "metformin",
+      "drugClass": "biguanide",
+      "brands": "Glucophage|Glucophage XR",
+      "commonStrengths": "500 mg|850 mg|1000 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "274783",
+    "text": "insulin glargine. Lantus. Basaglar. Toujeo. long-acting insulin. used for diabetes. my insulin. the long insulin. the bedtime shot. my night shot. the pen",
+    "metadata": {
+      "ingredientRxcui": "274783",
+      "generic": "insulin glargine",
+      "drugClass": "long-acting insulin",
+      "brands": "Lantus|Basaglar|Toujeo",
+      "commonStrengths": "100 units/mL",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "true"
+    }
+  },
+  {
+    "id": "4821",
+    "text": "glipizide. Glucotrol. sulfonylurea. used for type 2 diabetes. sugar pill. diabetes pill",
+    "metadata": {
+      "ingredientRxcui": "4821",
+      "generic": "glipizide",
+      "drugClass": "sulfonylurea",
+      "brands": "Glucotrol",
+      "commonStrengths": "5 mg|10 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "1545653",
+    "text": "empagliflozin. Jardiance. SGLT2 inhibitor. used for type 2 diabetes. used for heart failure. sugar pill. the new diabetes one. the expensive one",
+    "metadata": {
+      "ingredientRxcui": "1545653",
+      "generic": "empagliflozin",
+      "drugClass": "SGLT2 inhibitor",
+      "brands": "Jardiance",
+      "commonStrengths": "10 mg|25 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "7646",
+    "text": "omeprazole. Prilosec. proton pump inhibitor. used for heartburn. used for acid reflux. used for stomach protection. stomach pill. heartburn pill. acid pill. the purple one",
+    "metadata": {
+      "ingredientRxcui": "7646",
+      "generic": "omeprazole",
+      "drugClass": "proton pump inhibitor",
+      "brands": "Prilosec",
+      "commonStrengths": "20 mg|40 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "40790",
+    "text": "pantoprazole. pantoprazole sodium. Protonix. proton pump inhibitor. used for heartburn. used for acid reflux. used for stomach protection. stomach pill. acid pill. heartburn pill",
+    "metadata": {
+      "ingredientRxcui": "40790",
+      "generic": "pantoprazole",
+      "drugClass": "proton pump inhibitor",
+      "brands": "Protonix",
+      "commonStrengths": "20 mg|40 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "10582",
+    "text": "levothyroxine. levothyroxine sodium. Synthroid. Levoxyl. Euthyrox. thyroid hormone. used for hypothyroidism. used for underactive thyroid. thyroid pill. the morning pill on an empty stomach. thyroid",
+    "metadata": {
+      "ingredientRxcui": "10582",
+      "generic": "levothyroxine",
+      "drugClass": "thyroid hormone",
+      "brands": "Synthroid|Levoxyl|Euthyrox",
+      "commonStrengths": "25 mcg|50 mcg|75 mcg|88 mcg|100 mcg|112 mcg|125 mcg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "519",
+    "text": "allopurinol. Zyloprim. xanthine oxidase inhibitor. used for gout. gout pill. the one for my toe",
+    "metadata": {
+      "ingredientRxcui": "519",
+      "generic": "allopurinol",
+      "drugClass": "xanthine oxidase inhibitor",
+      "brands": "Zyloprim",
+      "commonStrengths": "100 mg|300 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "8640",
+    "text": "prednisone. Deltasone. Rayos. corticosteroid. used for inflammation. used for COPD flare. used for autoimmune conditions. steroid. the steroid. the pack that steps down. prednisone taper",
+    "metadata": {
+      "ingredientRxcui": "8640",
+      "generic": "prednisone",
+      "drugClass": "corticosteroid",
+      "brands": "Deltasone|Rayos",
+      "commonStrengths": "1 mg|5 mg|10 mg|20 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "435",
+    "text": "albuterol. albuterol sulfate. ProAir. Ventolin. Proventil. short-acting bronchodilator. used for asthma. used for COPD. used for shortness of breath. my inhaler. the rescue inhaler. the blue one. puffer. breathing thing",
+    "metadata": {
+      "ingredientRxcui": "435",
+      "generic": "albuterol",
+      "drugClass": "short-acting bronchodilator",
+      "brands": "ProAir|Ventolin|Proventil",
+      "commonStrengths": "90 mcg/actuation|2.5 mg/3 mL nebulizer",
+      "highAlert": "false",
+      "isInhaler": "true",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "88249",
+    "text": "montelukast. montelukast sodium. Singulair. leukotriene modifier. used for asthma. used for allergies. allergy pill. asthma pill. the bedtime allergy one",
+    "metadata": {
+      "ingredientRxcui": "88249",
+      "generic": "montelukast",
+      "drugClass": "leukotriene modifier",
+      "brands": "Singulair",
+      "commonStrengths": "10 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "25480",
+    "text": "gabapentin. Neurontin. Gralise. anticonvulsant. used for nerve pain. used for neuropathy. used for seizures. nerve pill. the one for my feet. nerve pain pill. the burning feet one",
+    "metadata": {
+      "ingredientRxcui": "25480",
+      "generic": "gabapentin",
+      "drugClass": "anticonvulsant",
+      "brands": "Neurontin|Gralise",
+      "commonStrengths": "100 mg|300 mg|400 mg|600 mg|800 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "36437",
+    "text": "sertraline. sertraline hydrochloride. Zoloft. SSRI antidepressant. used for depression. used for anxiety. the mood one. nerve pill. antidepressant. the one for my nerves",
+    "metadata": {
+      "ingredientRxcui": "36437",
+      "generic": "sertraline",
+      "drugClass": "SSRI antidepressant",
+      "brands": "Zoloft",
+      "commonStrengths": "25 mg|50 mg|100 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "10737",
+    "text": "trazodone. trazodone hydrochloride. Desyrel. antidepressant / sedative. used for insomnia. used for depression. sleeping pill. the one for sleep. my sleep pill",
+    "metadata": {
+      "ingredientRxcui": "10737",
+      "generic": "trazodone",
+      "drugClass": "antidepressant / sedative",
+      "brands": "Desyrel",
+      "commonStrengths": "50 mg|100 mg|150 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "135447",
+    "text": "donepezil. donepezil hydrochloride. Aricept. cholinesterase inhibitor. used for Alzheimer's disease. used for memory problems. memory pill. the memory one",
+    "metadata": {
+      "ingredientRxcui": "135447",
+      "generic": "donepezil",
+      "drugClass": "cholinesterase inhibitor",
+      "brands": "Aricept",
+      "commonStrengths": "5 mg|10 mg|23 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "596",
+    "text": "alprazolam. Xanax. benzodiazepine. used for anxiety. used for panic. nerve pill. anxiety pill. the one for my nerves. the calm one",
+    "metadata": {
+      "ingredientRxcui": "596",
+      "generic": "alprazolam",
+      "drugClass": "benzodiazepine",
+      "brands": "Xanax",
+      "commonStrengths": "0.25 mg|0.5 mg|1 mg|2 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "10689",
+    "text": "tramadol. tramadol hydrochloride. Ultram. opioid analgesic. used for pain. pain pill. the pain one. the strong pain pill",
+    "metadata": {
+      "ingredientRxcui": "10689",
+      "generic": "tramadol",
+      "drugClass": "opioid analgesic",
+      "brands": "Ultram",
+      "commonStrengths": "50 mg|100 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "7804",
+    "text": "oxycodone. oxycodone hydrochloride. Roxicodone. OxyContin. Percocet. opioid analgesic. used for pain. pain pill. the strong one. my pain medicine",
+    "metadata": {
+      "ingredientRxcui": "7804",
+      "generic": "oxycodone",
+      "drugClass": "opioid analgesic",
+      "brands": "Roxicodone|OxyContin|Percocet",
+      "commonStrengths": "5 mg|10 mg|15 mg|20 mg",
+      "highAlert": "true",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "161",
+    "text": "acetaminophen. Tylenol. analgesic. used for pain. used for fever. Tylenol. pain pill. the white pain one",
+    "metadata": {
+      "ingredientRxcui": "161",
+      "generic": "acetaminophen",
+      "drugClass": "analgesic",
+      "brands": "Tylenol",
+      "commonStrengths": "325 mg|500 mg|650 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "5640",
+    "text": "ibuprofen. Advil. Motrin. NSAID. used for pain. used for inflammation. Advil. the brown pill. pain pill. ibuprofen",
+    "metadata": {
+      "ingredientRxcui": "5640",
+      "generic": "ibuprofen",
+      "drugClass": "NSAID",
+      "brands": "Advil|Motrin",
+      "commonStrengths": "200 mg|400 mg|600 mg|800 mg",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  },
+  {
+    "id": "2418",
+    "text": "cholecalciferol. vitamin D3. vitamin supplement. used for vitamin D deficiency. used for bone health. vitamin D. my vitamin. the D one. bone vitamin",
+    "metadata": {
+      "ingredientRxcui": "2418",
+      "generic": "cholecalciferol",
+      "drugClass": "vitamin supplement",
+      "brands": "",
+      "commonStrengths": "1000 unit|2000 unit|5000 unit",
+      "highAlert": "false",
+      "isInhaler": "false",
+      "isInsulin": "false"
+    }
+  }
+]
