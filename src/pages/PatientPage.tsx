@@ -21,8 +21,9 @@ export function PatientPage(): JSX.Element {
       <Paper>
         <PatientHeader patient={patient} />
         <Tabs onChange={(t) => navigate(`./${t}`)?.catch(console.error)}>
-          <Tabs.List>
+          <Tabs.List style={{ flexWrap: 'nowrap', overflowX: 'auto' }}>
             <Tabs.Tab value="overview">Overview</Tabs.Tab>
+            <Tabs.Tab value="medications">Medications</Tabs.Tab>
             <Tabs.Tab value="timeline">Timeline</Tabs.Tab>
             <Tabs.Tab value="history">History</Tabs.Tab>
           </Tabs.List>

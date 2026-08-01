@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import type { JSX } from 'react';
 import { Route, Routes } from 'react-router';
 import { PatientHistory } from './components/PatientHistory';
+import { PatientMedications } from './components/PatientMedications';
 import { PatientOverview } from './components/PatientOverview';
 import { Timeline } from './components/Timeline';
 import { AddMedicationPage } from './pages/capture/AddMedicationPage';
@@ -44,6 +45,7 @@ export function App(): JSX.Element | null {
             <Route path="/Patient/:id" element={<PatientPage />}>
               <Route index element={<PatientOverview />} />
               <Route path="overview" element={<PatientOverview />} />
+              <Route path="medications" element={<PatientMedications />} />
               <Route path="timeline" element={<Timeline />} />
               <Route path="history" element={<PatientHistory />} />
             </Route>
