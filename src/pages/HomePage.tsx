@@ -62,13 +62,12 @@ export function HomePage(): JSX.Element {
               <Table.Th style={{ color: TEXT_MUTED, textTransform: 'uppercase', fontSize: 12 }}>Age</Table.Th>
               <Table.Th style={{ color: TEXT_MUTED, textTransform: 'uppercase', fontSize: 12 }}>Gender</Table.Th>
               <Table.Th style={{ color: TEXT_MUTED, textTransform: 'uppercase', fontSize: 12 }}>Status</Table.Th>
-              <Table.Th />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {filtered?.length === 0 && (
               <Table.Tr>
-                <Table.Td colSpan={5}>
+                <Table.Td colSpan={4}>
                   <Text c={TEXT_MUTED} ta="center" py="md">
                     No patients found.
                   </Text>
@@ -92,13 +91,6 @@ export function HomePage(): JSX.Element {
                     >
                       {patient.active === false ? 'Inactive' : 'Active'}
                     </Badge>
-                  </Table.Td>
-                  <Table.Td onClick={(e) => e.stopPropagation()}>
-                    <Group gap="xs" justify="flex-end">
-                      <Button size="xs" variant="default" component={Link} to={`/Patient/${patient.id}/capture`}>
-                        Start Reconciliation
-                      </Button>
-                    </Group>
                   </Table.Td>
                 </Table.Tr>
               );

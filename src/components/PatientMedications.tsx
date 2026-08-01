@@ -8,6 +8,9 @@ import { useParams } from 'react-router';
 import { parseMedicationStatementVerdict } from '../capture/realFhir';
 import { VerdictCard } from './VerdictCard';
 
+// Two lists: intended MedicationRequests (what the EHR says the patient should be on) and, below,
+// every verdict ever captured during a reconciliation session, decoded from MedicationStatement.note.
+
 function medDisplay(req: MedicationRequest): string {
   return (
     req.medicationCodeableConcept?.text ?? req.medicationCodeableConcept?.coding?.[0]?.display ?? 'Unknown medication'

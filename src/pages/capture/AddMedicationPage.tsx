@@ -5,6 +5,8 @@ import type { JSX } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import drugCatalog from '../../capture/drugCatalog.json';
 
+// Records a prescriber's intended medication as a FHIR MedicationRequest, picked from a static
+// local drug catalog rather than the moss.dev/Gemini pipeline used during bottle capture.
 const RXNORM_SYSTEM = 'http://www.nlm.nih.gov/research/umls/rxnorm';
 
 interface DrugCatalogEntry {

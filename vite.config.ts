@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
       react(),
       apiDevPlugin('/api/extract', () => import('./api/extract')),
       apiDevPlugin('/api/eligibility', () => import('./api/eligibility')),
+      apiDevPlugin('/api/extract-medlist', () => import('./api/extract-medlist')),
     ],
     server: {
       host: 'localhost',

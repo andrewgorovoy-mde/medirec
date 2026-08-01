@@ -19,6 +19,7 @@ import { PatientOverview } from './components/PatientOverview';
 import { Timeline } from './components/Timeline';
 import { AddMedicationPage } from './pages/capture/AddMedicationPage';
 import { CaptureSessionPage } from './pages/capture/CaptureSessionPage';
+import { ImportMedicationsPage } from './pages/capture/ImportMedicationsPage';
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { CreatePatientPage } from './pages/CreatePatientPage';
 import { HomePage } from './pages/HomePage';
@@ -54,6 +55,7 @@ export function App(): JSX.Element | null {
           </Route>
           <Route path="/Patient/:id/capture" element={<CaptureSessionPage />} />
           <Route path="/Patient/:id/MedicationRequest/new" element={<AddMedicationPage />} />
+          <Route path="/Patient/:id/MedicationRequest/import" element={<ImportMedicationsPage />} />
           <Route
             path="/dashboard"
             element={

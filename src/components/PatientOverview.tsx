@@ -12,6 +12,9 @@ export function PatientOverview(): JSX.Element {
   return (
     <Stack gap="lg" p="md">
       <Group justify="flex-end">
+        <Button variant="default" component={Link} to={`/Patient/${id}/MedicationRequest/import`}>
+          Upload Medication List (PDF)
+        </Button>
         <Button variant="default" component={Link} to={`/Patient/${id}/MedicationRequest/new`}>
           Add Intended Medication
         </Button>

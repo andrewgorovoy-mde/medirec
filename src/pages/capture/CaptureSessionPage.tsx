@@ -301,7 +301,7 @@ export function CaptureSessionPage(): JSX.Element {
         )}
 
         <Title order={5} mb="xs">
-          What the EHR already believes
+          Currently prescribed
         </Title>
         <Stack gap="xs" mb="lg">
           {session.ehrMeds.map((med) => (
