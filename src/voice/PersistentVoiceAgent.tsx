@@ -350,7 +350,7 @@ function VoiceAgentPanel({
     try {
       await start();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Unable to start the Deepgram voice session');
+      setErrorMessage(agentErrorMessage(err));
       // Force a brand-new AgentSession/WebSocket on the next attempt — reusing the same
       // session object after a failed connect is what produces "socket closed before open".
       resetSession({ autoStart: false });
