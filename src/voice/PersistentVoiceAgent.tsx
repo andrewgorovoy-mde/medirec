@@ -185,7 +185,22 @@ async function fetchDeepgramToken(): Promise<string> {
   return extractTokenFromText(text, response.headers.get('Content-Type') ?? '');
 }
 
+// A WebSocket that never reaches "open" and closes immediately (commonly code 1000 or 1006)
+// means Deepgram rejected the connection before the app-level protocol even started — this is
+// what our own testing traced to the Deepgram project lacking Voice Agent API access/billing,
+// not a bug in this app. Surface that distinction instead of the raw SDK string, which just
+// reads as a generic network glitch.
+const CONNECTION_REJECTED_PATTERN = /socket closed before open|unexpected server response/i;
+
 function agentErrorMessage(message: unknown): string {
+  const raw = rawAgentErrorMessage(message);
+  if (CONNECTION_REJECTED_PATTERN.test(raw)) {
+    return 'Voice service unavailable — the Deepgram account needs Voice Agent API access/billing enabled.';
+  }
+  return raw;
+}
+
+function rawAgentErrorMessage(message: unknown): string {
   if (message instanceof Error) {
     return message.message || 'Deepgram voice agent error';
   }
@@ -298,10 +313,12 @@ function VoiceAgentPanel({
   responseId,
   tokenError,
   clearTokenError,
+  resetSession,
 }: {
   responseId: string;
   tokenError?: string;
   clearTokenError: () => void;
+  resetSession: (opts: { autoStart: boolean }) => void;
 }): JSX.Element {
   const { start, stop, isConnecting, isReconnecting } = useAgentState();
   const { visualState, errorMessage, setErrorMessage, setThinking } = useVoiceVisualState(tokenError);
@@ -334,6 +351,9 @@ function VoiceAgentPanel({
       await start();
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Unable to start the Deepgram voice session');
+      // Force a brand-new AgentSession/WebSocket on the next attempt — reusing the same
+      // session object after a failed connect is what produces "socket closed before open".
+      resetSession({ autoStart: false });
     }
   }
 
@@ -342,10 +362,18 @@ function VoiceAgentPanel({
     setErrorMessage(undefined);
     clearTokenError();
     stop();
+    resetSession({ autoStart: false });
   }
 
   function handleOrbClick() {
     if (isBusy) {
+      return;
+    }
+    if (visualState === 'error') {
+      // The session's own WebSocket already failed asynchronously (e.g. "socket closed before
+      // open") — retrying on the same session object repeats the failure, so get a fresh one
+      // and reconnect immediately.
+      resetSession({ autoStart: true });
       return;
     }
     if (isActive) {
@@ -384,6 +412,13 @@ function VoiceAgentPanel({
 
 export function PersistentVoiceAgent({ responseId }: { responseId: string }): JSX.Element {
   const [tokenError, setTokenError] = useState<string>();
+  const [sessionKey, setSessionKey] = useState(0);
+  const [autoStart, setAutoStart] = useState(false);
+
+  function resetSession({ autoStart: shouldAutoStart }: { autoStart: boolean }): void {
+    setAutoStart(shouldAutoStart);
+    setSessionKey((k) => k + 1);
+  }
 
   const tokenFactory = useMemo(() => {
     return async () => {
@@ -412,14 +447,20 @@ export function PersistentVoiceAgent({ responseId }: { responseId: string }): JS
 
   return (
     <AgentProvider
+      key={sessionKey}
       config={agentSessionConfig}
       microphone
       microphoneOptions={MICROPHONE_OPTIONS}
       tts
       playerSampleRate={24_000}
-      autoStart={false}
+      autoStart={autoStart}
     >
-      <VoiceAgentPanel responseId={responseId} tokenError={tokenError} clearTokenError={() => setTokenError(undefined)} />
+      <VoiceAgentPanel
+        responseId={responseId}
+        tokenError={tokenError}
+        clearTokenError={() => setTokenError(undefined)}
+        resetSession={resetSession}
+      />
       <AuraDevTestPanel />
     </AgentProvider>
   );
